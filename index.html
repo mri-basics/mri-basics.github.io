@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html>
+  <body>
+    <canvas id="canvas" width="1500" height="750">
+      Désolé, votre navigateur ne prend pas en charge les canvas.
+    </canvas>
+    
+    <p>TR : <span id="tr"></span> - TE : <span id="te"></span></p>
+    
+    <table style="border-spacing: 10px;">
+      <tr><td></td><td>T1</td><td>T2</td><td>DP</td></tr>
+      <tr style="color: blue"><td>Eau</td><td>2400</td><td>160</td><td>1.0</td></tr>
+      <tr style="color: orange"><td>Graisse</td><td>260</td><td>80</td><td>1.0</td></tr>
+      <tr style="color: red"><td>Muscle</td><td>870</td><td>45</td><td>0.75</td></tr>
+    </table>
+    
+    <script>
+      const canvas = document.getElementById("canvas");
+      const span_tr = document.getElementById("tr");
+      const span_te = document.getElementById("te");
+      
+      const ctx = canvas.getContext("2d");
+      
+      const margin = 10;
+      const line_width = 2;
+      const factor = 2;
+      
+      const base_x = margin;
+      const base_y = canvas.height - margin;
+      const max_x = canvas.width - margin * 2;
+      const max_y = canvas.height - margin * 2;
+      
+      const min_tr = 10;
+      const min_te = 5;
+      
+      
+      let TR = 1500, TE = 200;
+      let dragged_object = 0;
+      
+      
+      canvas.addEventListener('mousedown', (e) => {
+        dragged_object = get_dragged_object(e);
+        if (dragged_object) refresh(e);
+      });
+      
+      canvas.addEventListener('mousemove', (e) => {
+        if (dragged_object) refresh(e);
+      });
+      
+      canvas.addEventListener('mouseup', () => {
+        dragged_object = 0;
+      });
+      
+      canvas.addEventListener('mouseleave', () => {
+        dragged_object = 0;
+      });
+      
+      
+      function draw_curve(T1, T2, DP, color) {
+        let T1_val = 1 - Math.exp(-TR/T1);
+        
+        ctx.lineWidth = line_width;
+        ctx.strokeStyle = color;
+        
+        function T1_curve(t) { return DP * (1 - Math.exp(-t/T1)); }
+        function T2_curve(t) { return DP * T1_val * Math.exp(-t/T2); }
+        
+        function draw(func, start) {
+          let x = 0, y = 0;
+          
+          ctx.beginPath();
+          
+          for (let i = 0; i < TR/factor; i++) {
+            x = base_x + start + i;
+            if (x > base_x + max_x) break;
+            
+            y = base_y - func(i*factor) * max_y;
+            
+            if (i == 0) ctx.moveTo(x, y);
+            else        ctx.lineTo(x, y);
+          }
+          
+          ctx.stroke();
+        }
+        
+        
+        for (let j = 0; true; j++) {
+          let start = j*TR/factor;
+          
+          if (start > base_x + max_x) break;
+          
+          if (j == 1) ctx.globalAlpha = 1;
+          else        ctx.globalAlpha = 0.1;
+          draw(T2_curve, start);
+          
+          if (j == 0) ctx.globalAlpha = 1;
+          else        ctx.globalAlpha = 0.1;
+          draw(T1_curve, start);
+        }
+        
+        ctx.beginPath();
+        ctx.globalAlpha = 1;
+        ctx.arc(base_x + (TR + TE) / factor, base_y - T2_curve(TE) * max_y, 4, 0, 2 * Math.PI);
+        ctx.fillStyle = color;
+        ctx.fill();
+      }
+      
+      
+      function draw_ui() {
+        ctx.lineWidth = 1;
+        ctx.strokeStyle = "black";
+        ctx.globalAlpha = 1;
+        
+        ctx.setLineDash([5]);
+        for (let j = 0; true; j++) {
+          x = base_x + TE/factor + j*TR/factor;
+          
+          if (x > base_x + max_x) break;
+          
+          ctx.beginPath();
+          ctx.moveTo(x, base_y);
+          ctx.lineTo(x, base_y-max_y);
+          ctx.stroke();
+        }
+        
+        ctx.setLineDash([]);
+        for (let j = 0; true; j++) {
+          x = base_x + (j+1)*TR/factor;
+          
+          if (x > base_x + max_x) break;
+          
+          ctx.beginPath();
+          ctx.moveTo(x, base_y);
+          ctx.lineTo(x, base_y-max_y);
+          ctx.stroke();
+        }
+        
+        ctx.beginPath();
+        ctx.moveTo(base_x, 0);
+        ctx.lineTo(base_x, base_y);
+        ctx.lineTo(canvas.width, base_y);
+        ctx.stroke();
+      }
+      
+      
+      function get_dragged_object(event) {
+        let rect = canvas.getBoundingClientRect();
+        let x = event.clientX - rect.left - base_x;
+        
+        if (Math.abs(x-((TR+TE)/factor)) < 20) return 2;
+        if (Math.abs(x-(TR/factor)) < 20) return 1;
+      }
+      
+      
+      function refresh(event) {
+        if (event) {
+          let rect = canvas.getBoundingClientRect();
+          let x = event.clientX - rect.left - base_x;
+          
+          if (dragged_object == 1) {
+            TR = x * factor;
+            if (TR < TE + min_tr) TR = TE + min_tr;
+          }
+          else if (dragged_object == 2) {
+            TE = x * factor - TR;
+            if (TE < min_te) TE = min_te;
+            if (TE > TR - min_tr) TE = TR - min_tr;
+          }
+          
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+        }
+        
+        draw_curve(870, 45, 0.75, "red");
+        draw_curve(260, 80, 1, "orange");
+        draw_curve(2400, 160, 1, "blue");
+        draw_ui();
+        
+        span_tr.innerHTML = TR;
+        span_te.innerHTML = TE;
+      }
+      
+      
+      refresh(null);
+      
+    </script>
+  </body>
+</html>
