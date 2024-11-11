@@ -8,6 +8,12 @@ class SpinEcho {
   arrow_width = 6;
   arrow_height = 10;
   
+  gradient_width = 20;
+  gradient_margin = 5;
+  gradient_x_offset = 20;
+  
+  drag_distance = 8;
+  
   line_width = 2;
   factor = 2;
   
@@ -58,31 +64,45 @@ class SpinEcho {
   }
   
   
-  set_tissue(label, className, color, T1, T2, DP, show) {
-    this.values.push({"class": className, "color": color, "T1": T1, "T2": T2, "DP": DP, "show": show});
+  set_tissue(name, id, color, T1, T2, DP, show) {
     
-    if (show) {
-      let tr = document.createElement("tr");
-      tr.style.color = color;
-      
-      let td = document.createElement("td");
-      td.innerHTML = label;
-      tr.appendChild(td);
-      
-      td = document.createElement("td");
-      td.innerHTML = T1;
-      tr.appendChild(td);
-      
-      td = document.createElement("td");
-      td.innerHTML = T2;
-      tr.appendChild(td);
-      
-      td = document.createElement("td");
-      td.innerHTML = DP;
-      tr.appendChild(td);
-      
-      this.table.appendChild(tr);
-    }
+    let tr = document.createElement("tr");
+    tr.style.color = color;
+    
+    let td = document.createElement("td");
+    tr.appendChild(td);
+    
+    let input = document.createElement("input");
+    input.setAttribute("type", "checkbox");
+    input.setAttribute("id", id);
+    if (show) input.checked = true;
+    td.appendChild(input);
+    
+    input.addEventListener('change', (e) => {
+      this.refresh();
+    });
+    
+    let label = document.createElement("label");
+    label.setAttribute("for", id);
+    label.style.marginLeft = "5px";
+    label.innerHTML = name;
+    td.appendChild(label);
+    
+    td = document.createElement("td");
+    td.innerHTML = T1;
+    tr.appendChild(td);
+    
+    td = document.createElement("td");
+    td.innerHTML = T2;
+    tr.appendChild(td);
+    
+    td = document.createElement("td");
+    td.innerHTML = DP;
+    tr.appendChild(td);
+    
+    this.table.appendChild(tr);
+    
+    this.values.push({"class": id, "color": color, "T1": T1, "T2": T2, "DP": DP, "checkbox": input});
   }
   
   
@@ -123,10 +143,11 @@ class SpinEcho {
   
   
   draw_curve(values) {
-    if (!values["show"]) return;
+    if (!values["checkbox"].checked) return;
     
     this.ctx.lineWidth = this.line_width;
     this.ctx.strokeStyle = values["color"];
+    this.ctx.setLineDash([]);
     
     for (let j = 0; true; j++) {
       let start = j*this.TR/this.factor;
@@ -141,16 +162,10 @@ class SpinEcho {
       else        this.ctx.globalAlpha = 0.1;
       this.draw_func(this.T1, start, values);
     }
-    
-    this.ctx.beginPath();
-    this.ctx.globalAlpha = 1;
-    this.ctx.arc(this.base_x + (this.TR + this.TE) / this.factor, this.base_y - this.T2(this.TE, values) * this.max_y, 4, 0, 2 * Math.PI);
-    this.ctx.fillStyle = values["color"];
-    this.ctx.fill();
   }
   
   
-  draw_ui() {
+  draw_ui(T2_values) {
     this.ctx.lineWidth = 1;
     this.ctx.strokeStyle = "black";
     this.ctx.fillStyle = "black";
@@ -158,7 +173,7 @@ class SpinEcho {
     
     this.ctx.setLineDash([5]);
     for (let j = 0; true; j++) {
-      let x = this.base_x + this.TE/this.factor + j*this.TR/this.factor;
+      let x = Math.round(this.base_x + this.TE/this.factor + j*this.TR/this.factor) - 0.5;
       
       if (x > this.base_x + this.max_x) break;
       
@@ -170,7 +185,7 @@ class SpinEcho {
     
     this.ctx.setLineDash([]);
     for (let j = 0; true; j++) {
-      let x = this.base_x + (j+1)*this.TR/this.factor;
+      let x = Math.round(this.base_x + (j+1)*this.TR/this.factor) - 0.5;
       
       if (x > this.base_x + this.max_x) break;
       
@@ -181,31 +196,78 @@ class SpinEcho {
     }
     
     this.ctx.beginPath();
-    this.ctx.moveTo(this.base_x, this.margin_top);
-    this.ctx.lineTo(this.base_x, this.base_y);
-    this.ctx.lineTo(this.canvas.width - this.margin_right, this.base_y);
+    this.ctx.moveTo(this.base_x - 0.5, this.margin_top - 0.5);
+    this.ctx.lineTo(this.base_x - 0.5, this.base_y - 0.5);
     this.ctx.stroke();
     
     this.ctx.beginPath();
-    this.ctx.moveTo(this.base_x - 1 - this.arrow_width/2, this.margin_top);
-    this.ctx.lineTo(this.base_x - 1, this.margin_top - this.arrow_height);
-    this.ctx.lineTo(this.base_x, this.margin_top - this.arrow_height);
-    this.ctx.lineTo(this.base_x + this.arrow_width/2, this.margin_top);
+    this.ctx.moveTo(this.base_x - 0.5, this.base_y - 0.5);
+    this.ctx.lineTo(this.canvas.width - this.margin_right + 0.5, this.base_y - 0.5);
+    this.ctx.stroke();
+    
+    this.ctx.beginPath();
+    this.ctx.moveTo(this.base_x - 0.5 - this.arrow_width/2, this.margin_top);
+    this.ctx.lineTo(this.base_x - 0.5, this.margin_top - this.arrow_height);
+    this.ctx.lineTo(this.base_x - 0.5 + this.arrow_width/2, this.margin_top);
     this.ctx.fill();
     
     this.ctx.beginPath();
-    this.ctx.moveTo(this.canvas.width - this.margin_right, this.base_y - 1 - this.arrow_width/2);
-    this.ctx.lineTo(this.canvas.width - this.margin_right + this.arrow_height, this.base_y - 1);
-    this.ctx.lineTo(this.canvas.width - this.margin_right + this.arrow_height, this.base_y);
-    this.ctx.lineTo(this.canvas.width - this.margin_right, this.base_y + this.arrow_width/2);
+    this.ctx.moveTo(this.canvas.width - this.margin_right, this.base_y - 0.5 - this.arrow_width/2);
+    this.ctx.lineTo(this.canvas.width - this.margin_right + this.arrow_height, this.base_y - 0.5);
+    this.ctx.lineTo(this.canvas.width - this.margin_right, this.base_y - 0.5 + this.arrow_width/2);
     this.ctx.fill();
+    
+    for (let i = 0; i < this.values.length; i++) {
+      if (this.values[i]["checkbox"].checked) {
+        this.ctx.beginPath();
+        this.ctx.globalAlpha = 1;
+        this.ctx.arc(this.base_x + (this.TR + this.TE) / this.factor, this.base_y - T2_values[i] * this.max_y, 4, 0, 2 * Math.PI);
+        this.ctx.fillStyle = this.values[i]["color"];
+        this.ctx.fill();
+      }
+    }
   }
   
   
-  color_svg() {
-    let T2_values = [];
-    for (let i = 0; i < this.values.length; i++) T2_values.push(this.T2(this.TE, this.values[i]));
+  draw_gradient(T2_values) {
+    let min = Math.min(...T2_values);
+    let max = Math.max(...T2_values);
     
+    let x = this.base_x + (this.TR + this.TE) / this.factor;
+    let y = Math.round(this.base_y - max * this.max_y);
+    let height = Math.round((max-min) * this.max_y);
+    
+    let grad = this.ctx.createLinearGradient(0, y, 0, y + height);
+    grad.addColorStop(0, "white");
+    grad.addColorStop(1, "black");
+    
+    this.ctx.beginPath();
+    
+    this.ctx.fillStyle = grad;
+    this.ctx.fillRect(x + this.gradient_x_offset, y - this.gradient_margin, this.gradient_width, height + this.gradient_margin*2);
+    
+    this.ctx.strokeStyle = "gray";
+    this.ctx.rect(x + this.gradient_x_offset, y - this.gradient_margin, this.gradient_width, height + this.gradient_margin*2);
+    this.ctx.stroke();
+    
+    this.ctx.setLineDash([2]);
+    
+    for (let i = 0; i < this.values.length; i++) {
+      if (this.values[i]["checkbox"].checked) {
+        y = Math.round(this.base_y - T2_values[i] * this.max_y);
+        
+        this.ctx.strokeStyle = this.values[i]["color"];
+        
+        this.ctx.beginPath();
+        this.ctx.moveTo(x, y - 0.5);
+        this.ctx.lineTo(x + this.gradient_x_offset + this.gradient_width, y - 0.5);
+        this.ctx.stroke();
+      }
+    }
+  }
+  
+  
+  color_svg(T2_values) {
     let min = Math.min(...T2_values);
     let max = Math.max(...T2_values);
     
@@ -225,8 +287,8 @@ class SpinEcho {
     let max_TR = Math.ceil(this.max_x * this.factor / this.TR);
     
     for (let i = 0; i < max_TR; i++) {
-      if (Math.abs(x - ((this.TR * i + this.TE) / this.factor)) < 20) return ["TE", i];
-      if (Math.abs(x - (this.TR * (i+1) / this.factor)) < 20) return ["TR", i];
+      if (Math.abs(x - ((this.TR * i + this.TE) / this.factor)) < this.drag_distance) return ["TE", i];
+      if (Math.abs(x - (this.TR * (i+1) / this.factor)) < this.drag_distance) return ["TR", i];
     }
     
     return null;
@@ -252,14 +314,22 @@ class SpinEcho {
       }
     }
     
-    this.span_TR.innerHTML = this.TR;
-    this.span_TE.innerHTML = this.TE;
     
     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
     
-    for (let i = 0; i < this.values.length; i++) this.draw_curve(this.values[i]);
-    this.draw_ui();
-    this.color_svg();
+    this.span_TR.innerHTML = this.TR;
+    this.span_TE.innerHTML = this.TE;
+    
+    
+    let T2_values = [];
+    for (let i = 0; i < this.values.length; i++) {
+      this.draw_curve(this.values[i]);
+      T2_values.push(this.T2(this.TE, this.values[i]));
+    }
+    
+    this.draw_ui(T2_values);
+    this.draw_gradient(T2_values);
+    this.color_svg(T2_values);
   }
   
   
@@ -274,10 +344,10 @@ class SpinEcho {
 
 const se = new SpinEcho("canvas", "svg", "tr", "te", "table");
 
-se.set_tissue("Eau", "water", "blue", 2400, 160, 1, true)
-se.set_tissue("Graisse", "fat", "orange", 260, 80, 1, true)
+se.set_tissue("LCS", "csf", "blue", 2400, 160, 1, true)
+se.set_tissue("Graisse", "fat", "orange", 260, 80, 0.9, true)
 se.set_tissue("Muscle", "muscle", "red", 870, 45, 0.75, false)
-se.set_tissue("Substance grise", "gray_matter", "gray", 910, 100, 0.8, true)
-se.set_tissue("Substance blanche", "white_matter", "lightgray", 680, 90, 0.7, true)
+se.set_tissue("Substance grise", "gray_matter", "gray", 910, 100, 0.85, true)
+se.set_tissue("Substance blanche", "white_matter", "lightgray", 680, 90, 0.8, true)
 
 se.refresh();
