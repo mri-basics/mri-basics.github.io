@@ -1,0 +1,26 @@
+.view
+{
+  display: flex;
+  justify-content: space-between;
+  max-width: 1800px;
+}
+
+
+TABLE
+{
+  border-spacing: 10px;
+}
+
+
+FOOTER
+{
+  margin-top: 60px;
+  text-align: center;
+  font-size: small;
+}
+
+
+FOOTER>P
+{
+  margin: 0;
+}
