@@ -418,7 +418,7 @@ class AnimatedGraph extends InteractiveGraphRenderer {
   curve_color = "black";
   RF_pulse = 100;
   
-  play = false;
+  play_state = false;
   timeout = 50;
   
   
@@ -429,7 +429,7 @@ class AnimatedGraph extends InteractiveGraphRenderer {
     
     this.play_button = document.getElementById(play_id);
     this.play_button.addEventListener('click', (e) => {
-      this.play_pause();
+      this.play();
     });
   }
   
@@ -446,6 +446,8 @@ class AnimatedGraph extends InteractiveGraphRenderer {
   update_drag_n_drop(x, y) {
     this.time = x;
     if (this.time < 1) this.time = 1;
+    
+    if (this.play_state) this.play(false);
   }
   
   
@@ -499,18 +501,20 @@ class AnimatedGraph extends InteractiveGraphRenderer {
   }
   
   
-  play_pause() {
-    if (this.play) {
-      this.play = false;
-      this.play_button.innerText = "Play";
-    }
-    else {
+  play(state=null) {
+    if (state === null)          this.play_state = !this.play_state;
+    else if (state == this.play_state) return;
+    else                         this.play_state = state;
+    
+    if (this.play_state) {
       setTimeout(() => {
         this.update_progress();
       }, this.timeout);
       
-      this.play = true;
       this.play_button.innerText = "Pause";
+    }
+    else {
+      this.play_button.innerText = "Play";
     }
   }
   
@@ -526,7 +530,7 @@ class AnimatedGraph extends InteractiveGraphRenderer {
     
     this.refresh();
     
-    if (!this.play) return;
+    if (!this.play_state) return;
     
     setTimeout(() => {
       this.update_progress();
@@ -644,12 +648,18 @@ class LongitudinalComponent extends AnimatedGraph {
   timeout_pause = 1000;
   
   
-  constructor(canvas_id, svg_id, play_id) {
+  constructor(canvas_id, svg_id, play_id, parallel_id, anti_parallel_id) {
     super(canvas_id, svg_id, play_id);
     
+    this.span_parallel = document.getElementById(parallel_id);
+    this.span_anti_parallel = document.getElementById(anti_parallel_id);
+    
     this.arrows = [];
+    this.arrows_bg_count = 0;
     
     for (let item of this.svg.getElementsByTagName("g")) {
+      if (item.id == "B0") continue;
+      
       let arrow = item.getElementsByTagName("path")[0];
       
       if (this.parallel === undefined) {
@@ -659,7 +669,14 @@ class LongitudinalComponent extends AnimatedGraph {
         this.anti_parallel = arrow;
       }
       
-      if (item.style.opacity == "1") this.arrows.push(arrow);
+      if (item.style.opacity == "1") {
+        item.setAttribute("class", "extra-protons");
+        this.arrows.push(arrow);
+      }
+      else {
+        item.setAttribute("class", "background-protons");
+        this.arrows_bg_count++;
+      }
       
       let animateTransform = document.createElementNS("http://www.w3.org/2000/svg", "animateTransform");
       animateTransform.setAttribute("attributeType", "xml");
@@ -686,6 +703,7 @@ class LongitudinalComponent extends AnimatedGraph {
   update_svg(fraction) {
     let length = this.arrows.length / 2;
     let arrow;
+    let count = 0;
     
     for (let i = 0; i < length; i++) {
       arrow = this.arrows[i];
@@ -699,8 +717,12 @@ class LongitudinalComponent extends AnimatedGraph {
         arrow.style.stroke = this.anti_parallel.style.stroke;
         arrow.style.markerStart = this.anti_parallel.style.markerStart;
         arrow.style.markerEnd = this.anti_parallel.style.markerEnd;
+        count++;
       }
     }
+    
+    this.span_parallel.innerText = this.arrows_bg_count / 2 + this.arrows.length - count;
+    this.span_anti_parallel.innerText = this.arrows_bg_count / 2 + count;
   }
   
   
@@ -709,5 +731,11 @@ class LongitudinalComponent extends AnimatedGraph {
     else if (this.time < this.RF_pulse) return this.timeout;
     else                                return this.timeout * (1 - this.compute_curve(this.time));
   }
+  
+  
+  set_opacity(opacity) {
+    for (let item of this.svg.getElementsByClassName("background-protons")) {
+      item.style.opacity = opacity/100;
+    }
+  }
 }
-
