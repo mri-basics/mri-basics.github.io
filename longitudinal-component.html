@@ -2,13 +2,15 @@
 <html lang="fr">
   <head>
     <meta charset="utf-8" />
-    <title>Aimantation macroscopique longitudinale</title>
+    <title>Aimantation longitudinale</title>
     <link rel="stylesheet" type="text/css" href="main.css" />
     <script type="text/javascript" src="main.js"></script>
   </head>
   
   <body>
-    <h1>Aimantation macroscopique longitudinale</h1>
+    <h1>Aimantation longitudinale</h1>
+    
+    <p>Observez le comportement de <strong>l'excès de spins</strong> en position de basse énergie. C'est la relaxation spin-réseau.</p>
     
     <canvas id="canvas" width="640" height="480">
       Désolé, votre navigateur ne prend pas en charge les canvas.
@@ -2164,7 +2166,7 @@
     
     <script type="text/javascript">
       
-      const lc = new LongitudinalComponent("canvas", "svg", "play-button", "parallel", "anti-parallel");
+      const lc = new LongitudinalComponent();
       lc.refresh();
       lc.play(true);
       

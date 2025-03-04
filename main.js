@@ -24,16 +24,21 @@ function get_item_rotation(item) {
 
 
 class InteractiveGraphRenderer {
-  margin_left = 10;
-  margin_right = 10;
-  margin_top = 10;
-  margin_bottom = 10;
+  margin_left = 50;
+  margin_right = 20;
+  margin_top = 100;
+  margin_bottom = 30;
+  
+  pulse_width = 8;
+  pulse_height = 40;
   
   arrow_width = 6;
   arrow_height = 10;
+  arrow_offset = 5;
   
   line_width = 2;
   factor = 2;
+  time_steps = 200;
   
   allow_negative_values = false;
   
@@ -45,10 +50,10 @@ class InteractiveGraphRenderer {
     this.canvas = document.getElementById(canvas_id);
     this.ctx = this.canvas.getContext("2d");
     
-    this.base_x = this.margin_left;
-    this.base_y = this.canvas.height - this.margin_bottom;
-    this.max_x = this.canvas.width - this.margin_left - this.margin_right;
-    this.max_y = this.canvas.height - this.margin_top - this.margin_bottom;
+    this.graph_x = this.margin_left;
+    this.graph_y = this.canvas.height - this.margin_bottom;
+    this.graph_width = this.canvas.width - this.margin_left - this.margin_right;
+    this.graph_height = this.canvas.height - this.margin_top - this.margin_bottom;
     
     this.canvas.addEventListener('mousedown', (e) => {
       this.dragged_object = this.get_dragged_object(e);
@@ -86,7 +91,7 @@ class InteractiveGraphRenderer {
   refresh(event=null) {
     if (event && this.dragged_object) {
       let rect = this.canvas.getBoundingClientRect();
-      let x = event.clientX - rect.left - this.base_x;
+      let x = event.clientX - rect.left - this.graph_x;
       
       this.update_drag_n_drop(x * this.factor, null);
     }
@@ -106,35 +111,122 @@ class InteractiveGraphRenderer {
   
   
   draw_axes() {
-    if (!this.allow_negative_values) this.ctx.clearRect(0, this.base_y, this.canvas.width, this.margin_bottom);
+    // If negative values are not allowed, clear the bottom margin area
+    if (!this.allow_negative_values) this.ctx.clearRect(0, this.graph_y + 0.5, this.canvas.width, this.margin_bottom);
     
+    // Set drawing properties
     this.ctx.lineWidth = 1;
     this.ctx.strokeStyle = "black";
     this.ctx.fillStyle = "black";
     this.ctx.globalAlpha = 1;
     this.ctx.setLineDash([]);
     
+    
+    // Draw pulse timeline
+    this.ctx.font = "10px Arial";
+    this.ctx.textAlign = "center";
+    
+    let pulse_y = 50.5;
     this.ctx.beginPath();
-    this.ctx.moveTo(this.base_x - 0.5, this.margin_top - 0.5);
-    this.ctx.lineTo(this.base_x - 0.5, this.base_y - 0.5);
+    this.ctx.moveTo(this.graph_x - this.pulse_width, pulse_y);
+    
+    let angle, time, angle_ratio, ratio;
+    for (let pulse of this.get_pulses()) {
+      [angle, time] = pulse;
+      angle_ratio = angle / 180;
+      
+      this.ctx.fillText(`${angle}°`, this.graph_x + time / this.factor, 10 + this.pulse_height - this.pulse_height * angle_ratio);
+      
+      let start = this.graph_x + time / this.factor - this.pulse_width/2;
+      this.ctx.lineTo(start, pulse_y);
+      
+      for (let i = 0; i < this.pulse_width; i++) {
+        if (i < this.pulse_width/2) ratio = 2 * i / this.pulse_width;
+        else                        ratio = 2 - 2 * i / this.pulse_width;
+        
+        this.ctx.lineTo(start + i, pulse_y - ratio * (this.pulse_height * Math.sin(Math.PI * i / 2)) * angle_ratio);
+      }
+      
+      this.ctx.lineTo(start + this.pulse_width, pulse_y);
+    }
+    
+    this.ctx.lineTo(this.canvas.width + this.arrow_offset - this.margin_right + 0.5, pulse_y);
+    this.ctx.stroke();
+    
+    
+    // Draw X and Y axes
+    this.ctx.beginPath();
+    this.ctx.moveTo(this.graph_x - 0.5, this.margin_top - this.arrow_offset - 0.5);
+    this.ctx.lineTo(this.graph_x - 0.5, this.graph_y - 0.5);
     this.ctx.stroke();
     
     this.ctx.beginPath();
-    this.ctx.moveTo(this.base_x - 0.5, this.base_y - 0.5);
-    this.ctx.lineTo(this.canvas.width - this.margin_right + 0.5, this.base_y - 0.5);
+    this.ctx.moveTo(this.graph_x - 0.5, this.graph_y - 0.5);
+    this.ctx.lineTo(this.canvas.width + this.arrow_offset - this.margin_right + 0.5, this.graph_y - 0.5);
     this.ctx.stroke();
     
+    
+    // Draw arrowheads at the ends of both axes
     this.ctx.beginPath();
-    this.ctx.moveTo(this.base_x - 0.5 - this.arrow_width/2, this.margin_top);
-    this.ctx.lineTo(this.base_x - 0.5, this.margin_top - this.arrow_height);
-    this.ctx.lineTo(this.base_x - 0.5 + this.arrow_width/2, this.margin_top);
+    this.ctx.moveTo(this.graph_x - 0.5 - this.arrow_width/2, this.margin_top - this.arrow_offset);
+    this.ctx.lineTo(this.graph_x - 0.5, this.margin_top - this.arrow_offset - this.arrow_height);
+    this.ctx.lineTo(this.graph_x - 0.5 + this.arrow_width/2, this.margin_top - this.arrow_offset);
     this.ctx.fill();
     
     this.ctx.beginPath();
-    this.ctx.moveTo(this.canvas.width - this.margin_right, this.base_y - 0.5 - this.arrow_width/2);
-    this.ctx.lineTo(this.canvas.width - this.margin_right + this.arrow_height, this.base_y - 0.5);
-    this.ctx.lineTo(this.canvas.width - this.margin_right, this.base_y - 0.5 + this.arrow_width/2);
+    this.ctx.moveTo(this.canvas.width - this.margin_right + this.arrow_offset, this.graph_y - 0.5 - this.arrow_width/2);
+    this.ctx.lineTo(this.canvas.width - this.margin_right + this.arrow_offset + this.arrow_height, this.graph_y - 0.5);
+    this.ctx.lineTo(this.canvas.width - this.margin_right + this.arrow_offset, this.graph_y - 0.5 + this.arrow_width/2);
     this.ctx.fill();
+    
+    
+    // Write axis labels
+    this.ctx.font = "14px Arial";
+    this.ctx.textAlign = "left";
+    this.ctx.fillText("Signal", 2, this.margin_top - this.arrow_height - this.arrow_offset);
+    
+    let text = "Temps";
+    let text_width = Math.ceil(this.ctx.measureText(text).width);
+    this.ctx.textAlign = "right";
+    this.ctx.fillText(text, this.canvas.width - 5, this.graph_y + 22);
+    
+    
+    // Draw Y-axis tick marks and percentage labels
+    this.ctx.font = "12px Arial";
+    this.ctx.textAlign = "right";
+    let tmp_y;
+    
+    for (let i = 0.25; i <= 1; i += 0.25) {
+      tmp_y = this.graph_y - 0.5 - Math.round(this.graph_height * i);
+      
+      this.ctx.beginPath();
+      this.ctx.moveTo(this.graph_x - 5.5, tmp_y);
+      this.ctx.lineTo(this.graph_x + 4.5, tmp_y);
+      this.ctx.stroke();
+      
+      this.ctx.fillText(`${i*100} %`, this.graph_x - 8, tmp_y + 4);
+    }
+    
+    
+    // Draw X-axis tick marks and corresponding time values
+    this.ctx.textAlign = "center";
+    let tmp_x;
+    
+    for (let i = 0; i < this.graph_width-text_width; i += this.time_steps / this.factor) {
+      tmp_x = this.graph_x - 0.5 + i;
+      
+      this.ctx.beginPath();
+      this.ctx.moveTo(tmp_x, this.graph_y - 5.5);
+      this.ctx.lineTo(tmp_x, this.graph_y + 4.5);
+      this.ctx.stroke();
+      
+      this.ctx.fillText(`${i*this.factor} ms`, tmp_x, this.graph_y + 20);
+    }
+  }
+  
+  
+  get_pulses() {
+    return [];
   }
 }
 
@@ -152,7 +244,8 @@ class SpinEcho extends InteractiveGraphRenderer {
   min_te = 5;
   
   
-  constructor(canvas_id, svg_id, tr_id, te_id, table_id) {
+  constructor(canvas_id="canvas", svg_id="svg", tr_id="tr", te_id="te", table_id="table") {
+    document.getElementById(canvas_id).width = window.innerWidth - 20;
     super(canvas_id);
     
     this.svg = document.getElementById(svg_id);
@@ -162,14 +255,18 @@ class SpinEcho extends InteractiveGraphRenderer {
     
     this.table = document.getElementById(table_id);
     this.values = [];
+    
+    window.addEventListener('resize', () => {
+      this.resize();
+    });
   }
   
   
   get_dragged_object(event) {
     let rect = this.canvas.getBoundingClientRect();
-    let x = event.clientX - rect.left - this.base_x;
+    let x = event.clientX - rect.left - this.graph_x;
     
-    let max_TR = Math.ceil(this.max_x * this.factor / this.TR);
+    let max_TR = Math.ceil(this.graph_width * this.factor / this.TR);
     
     for (let i = 0; i < max_TR; i++) {
       if (Math.abs(x - ((this.TR * i + this.TE) / this.factor)) < this.drag_distance) return ["TE", i];
@@ -245,10 +342,10 @@ class SpinEcho extends InteractiveGraphRenderer {
     this.ctx.beginPath();
     
     for (let i = 0; i < this.TR/this.factor; i++) {
-      x = this.base_x + start + i;
-      if (x > this.base_x + this.max_x) break;
+      x = this.graph_x + start + i;
+      if (x > this.graph_x + this.graph_width) break;
       
-      y = this.base_y - func.call(this, i*this.factor, values) * this.max_y;
+      y = this.graph_y - func.call(this, i*this.factor, values) * this.graph_height;
       
       if (i == 0) this.ctx.moveTo(x, y);
       else        this.ctx.lineTo(x, y);
@@ -265,16 +362,17 @@ class SpinEcho extends InteractiveGraphRenderer {
     this.ctx.strokeStyle = values["color"];
     this.ctx.setLineDash([]);
     
-    for (let j = 0; true; j++) {
-      let start = j*this.TR/this.factor;
+    let start;
+    for (let i = 0; true; i++) {
+      start = i * this.TR / this.factor;
       
-      if (start > this.base_x + this.max_x) break;
+      if (start > this.graph_x + this.graph_width) break;
       
-      if (j == 1) this.ctx.globalAlpha = 1;
+      if (i == 1) this.ctx.globalAlpha = 1;
       else        this.ctx.globalAlpha = 0.1;
       this.draw_func(this.T2, start, values);
       
-      if (j == 0) this.ctx.globalAlpha = 1;
+      if (i == 0) this.ctx.globalAlpha = 1;
       else        this.ctx.globalAlpha = 0.1;
       this.draw_func(this.T1, start, values);
     }
@@ -288,26 +386,26 @@ class SpinEcho extends InteractiveGraphRenderer {
     this.ctx.globalAlpha = 1;
     
     this.ctx.setLineDash([5]);
-    for (let j = 0; true; j++) {
-      let x = Math.round(this.base_x + this.TE/this.factor + j*this.TR/this.factor) - 0.5;
+    for (let i = 0; true; i++) {
+      let x = Math.round(this.graph_x + this.TE/this.factor + i*this.TR/this.factor) - 0.5;
       
-      if (x > this.base_x + this.max_x) break;
+      if (x > this.graph_x + this.graph_width) break;
       
       this.ctx.beginPath();
-      this.ctx.moveTo(x, this.base_y);
-      this.ctx.lineTo(x, this.base_y-this.max_y);
+      this.ctx.moveTo(x, this.graph_y);
+      this.ctx.lineTo(x, this.graph_y-this.graph_height);
       this.ctx.stroke();
     }
     
     this.ctx.setLineDash([]);
-    for (let j = 0; true; j++) {
-      let x = Math.round(this.base_x + (j+1)*this.TR/this.factor) - 0.5;
+    for (let i = 0; true; i++) {
+      let x = Math.round(this.graph_x + (i+1)*this.TR/this.factor) - 0.5;
       
-      if (x > this.base_x + this.max_x) break;
+      if (x > this.graph_x + this.graph_width) break;
       
       this.ctx.beginPath();
-      this.ctx.moveTo(x, this.base_y);
-      this.ctx.lineTo(x, this.base_y-this.max_y);
+      this.ctx.moveTo(x, this.graph_y);
+      this.ctx.lineTo(x, this.graph_y-this.graph_height);
       this.ctx.stroke();
     }
   }
@@ -318,7 +416,7 @@ class SpinEcho extends InteractiveGraphRenderer {
     for (let i = 0; i < this.values.length; i++) {
       if (this.values[i]["checkbox"].checked) {
         this.ctx.beginPath();
-        this.ctx.arc(this.base_x + (this.TR + this.TE) / this.factor, this.base_y - T2_values[i] * this.max_y, 4, 0, 2 * Math.PI);
+        this.ctx.arc(this.graph_x + (this.TR + this.TE) / this.factor, this.graph_y - T2_values[i] * this.graph_height, 4, 0, 2 * Math.PI);
         this.ctx.fillStyle = this.values[i]["color"];
         this.ctx.fill();
       }
@@ -328,9 +426,9 @@ class SpinEcho extends InteractiveGraphRenderer {
     let min = Math.min(...T2_values);
     let max = Math.max(...T2_values);
     
-    let x = this.base_x + (this.TR + this.TE) / this.factor;
-    let y = Math.round(this.base_y - max * this.max_y);
-    let height = Math.round((max-min) * this.max_y);
+    let x = this.graph_x + (this.TR + this.TE) / this.factor;
+    let y = Math.round(this.graph_y - max * this.graph_height);
+    let height = Math.round((max-min) * this.graph_height);
     
     let grad = this.ctx.createLinearGradient(0, y, 0, y + height);
     grad.addColorStop(0, "white");
@@ -350,7 +448,7 @@ class SpinEcho extends InteractiveGraphRenderer {
     
     for (let i = 0; i < this.values.length; i++) {
       if (this.values[i]["checkbox"].checked) {
-        y = Math.round(this.base_y - T2_values[i] * this.max_y);
+        y = Math.round(this.graph_y - T2_values[i] * this.graph_height);
         
         this.ctx.strokeStyle = this.values[i]["color"];
         
@@ -360,6 +458,23 @@ class SpinEcho extends InteractiveGraphRenderer {
         this.ctx.stroke();
       }
     }
+  }
+  
+  
+  get_pulses() {
+    let pulses = [];
+    
+    let start;
+    for (let i = 0; true; i++) {
+      start = i * this.TR;
+      
+      if (start / this.factor > this.graph_x + this.graph_width) break;
+      
+      pulses.push([90, start]);
+      pulses.push([180, start + this.TE / 2]);
+    }
+    
+    return pulses;
   }
   
   
@@ -398,15 +513,22 @@ class SpinEcho extends InteractiveGraphRenderer {
     
     
     let T2_values = [];
-    for (let i = 0; i < this.values.length; i++) {
-      this.draw_curve(this.values[i]);
-      T2_values.push(this.T2(this.TE, this.values[i]));
+    for (let value of this.values) {
+      this.draw_curve(value);
+      T2_values.push(this.T2(this.TE, value));
     }
     
     this.draw_axes();
     this.draw_bars();
     this.draw_gradient(T2_values);
     this.color_svg(T2_values);
+  }
+  
+  
+  resize() {
+    this.canvas.width = window.innerWidth - 20;
+    this.graph_width = this.canvas.width - this.margin_left - this.margin_right;
+    this.refresh();
   }
 }
 
@@ -436,7 +558,7 @@ class AnimatedGraph extends InteractiveGraphRenderer {
   
   get_dragged_object(event) {
     let rect = this.canvas.getBoundingClientRect();
-    let x = event.clientX - rect.left - this.base_x;
+    let x = event.clientX - rect.left - this.graph_x;
     
     if (Math.abs(x - (this.time / this.factor)) < this.drag_distance) return true;
     else                                                              return null;
@@ -446,6 +568,7 @@ class AnimatedGraph extends InteractiveGraphRenderer {
   update_drag_n_drop(x, y) {
     this.time = x;
     if (this.time < 1) this.time = 1;
+    else if (this.time > this.graph_width * this.factor) this.time = this.graph_width * this.factor;
     
     if (this.play_state) this.play(false);
   }
@@ -464,9 +587,9 @@ class AnimatedGraph extends InteractiveGraphRenderer {
     
     let x = 0, y = 0;
     
-    for (let i = 0; i < this.base_x + this.max_x; i++) {
-      x = this.base_x + i;
-      y = this.base_y - this.compute_curve(i*this.factor) * this.max_y;
+    for (let i = 0; i < this.graph_width; i++) {
+      x = this.graph_x + i;
+      y = this.graph_y - this.compute_curve(i * this.factor) * this.graph_height;
       
       if (i == 0) this.ctx.moveTo(x, y);
       else        this.ctx.lineTo(x, y);
@@ -483,11 +606,11 @@ class AnimatedGraph extends InteractiveGraphRenderer {
     this.ctx.globalAlpha = 1;
     
     this.ctx.setLineDash([5]);
-    let x = Math.round(this.base_x + this.time/this.factor) - 0.5;
+    let x = Math.round(this.graph_x + this.time/this.factor) - 0.5;
     
     this.ctx.beginPath();
-    this.ctx.moveTo(x, this.base_y);
-    this.ctx.lineTo(x, this.base_y-this.max_y-this.arrow_height);
+    this.ctx.moveTo(x, this.graph_y);
+    this.ctx.lineTo(x, this.graph_y - this.graph_height - this.arrow_height);
     this.ctx.stroke();
   }
   
@@ -498,6 +621,11 @@ class AnimatedGraph extends InteractiveGraphRenderer {
     this.draw_bar();
     
     this.update_svg(this.compute_curve(this.time));
+  }
+  
+  
+  get_pulses() {
+    return [[90, this.RF_pulse]];
   }
   
   
@@ -525,7 +653,7 @@ class AnimatedGraph extends InteractiveGraphRenderer {
   
   update_progress() {
     this.time += this.factor;
-    if (this.time/this.factor > this.base_x + this.max_x) this.time = 1;
+    if (this.time > this.graph_width * this.factor) this.time = 1;
     if (this.time > this.RF_pulse && this.time - this.RF_pulse < this.factor) this.time = this.RF_pulse;
     
     this.refresh();
@@ -546,101 +674,6 @@ class AnimatedGraph extends InteractiveGraphRenderer {
 
 
 
-class TransverseComponent extends AnimatedGraph {
-  curve_color = "red";
-  T2_value = 160;
-  
-  timeout_pause = 1000;
-  
-  overlay = false;
-  
-  
-  constructor(canvas_id, svg_id, play_id, overlay_id) {
-    super(canvas_id, svg_id, play_id);
-    
-    this.arrows = [];
-    
-    for (let item of this.svg.getElementsByTagName("g")) {
-      if (this.default_proton === undefined) this.default_proton = item;
-      
-      [item.init_x, item.init_y] = get_item_translation(item);
-      
-      let arrow = item.getElementsByTagName("path")[0];
-      arrow.init_angle = get_item_rotation(arrow);
-      this.arrows.push(arrow);
-      
-      let animateTransform = document.createElementNS("http://www.w3.org/2000/svg", "animateTransform");
-      animateTransform.setAttribute("attributeType", "xml");
-      animateTransform.setAttribute("attributeName", "transform");
-      animateTransform.setAttribute("type", "rotate");
-      animateTransform.setAttribute("from", "0 0 0");
-      animateTransform.setAttribute("to", "360 0 0");
-      animateTransform.setAttribute("dur", "2s");
-      animateTransform.setAttribute("additive", "sum");
-      animateTransform.setAttribute("repeatCount", "indefinite");
-      
-      item.appendChild(animateTransform);
-    }
-    
-    
-    this.overlay_button = document.getElementById(overlay_id);
-    this.overlay_button.addEventListener('click', (e) => {
-      this.overlay_protons();
-    });
-  }
-  
-  
-  compute_curve(t) {
-    if (t < this.RF_pulse) return 0;
-    else                   return Math.exp((-t + this.RF_pulse)/this.T2_value);
-  }
-  
-  
-  update_svg(fraction) {
-    for (let arrow of this.arrows) {
-      arrow.setAttribute("transform", `rotate(${arrow.init_angle * (1-fraction)})`);
-    }
-  }
-  
-  
-  get_timeout() {
-    if (this.time == this.RF_pulse)     return this.timeout_pause;
-    else if (this.time < this.RF_pulse) return this.timeout;
-    else                                return this.timeout * this.compute_curve(this.time);
-  }
-  
-  
-  overlay_protons() {
-    if (this.overlay) {
-      for (let item of this.svg.getElementsByTagName("g")) {
-        if (item == this.default_proton) continue;
-        
-        item.setAttribute("transform", `translate(${item.init_x},${item.init_y})`);
-        let circle = item.getElementsByTagName("circle")[0];
-        circle.style.display = "";
-      }
-      
-      this.overlay = false;
-      this.overlay_button.innerText = "Superposer";
-    }
-    else {
-      for (let item of this.svg.getElementsByTagName("g")) {
-        if (item == this.default_proton) continue;
-        
-        item.setAttribute("transform", `translate(${this.default_proton.init_x},${this.default_proton.init_y})`);
-        let circle = item.getElementsByTagName("circle")[0];
-        circle.style.display = "None";
-      }
-      
-      this.overlay = true;
-      this.overlay_button.innerText = "Séparer";
-    }
-  }
-}
-
-
-
-
 class LongitudinalComponent extends AnimatedGraph {
   curve_color = "blue";
   T1_value = 260;
@@ -648,7 +681,7 @@ class LongitudinalComponent extends AnimatedGraph {
   timeout_pause = 1000;
   
   
-  constructor(canvas_id, svg_id, play_id, parallel_id, anti_parallel_id) {
+  constructor(canvas_id="canvas", svg_id="svg", play_id="play-button", parallel_id="parallel", anti_parallel_id="anti-parallel") {
     super(canvas_id, svg_id, play_id);
     
     this.span_parallel = document.getElementById(parallel_id);
@@ -736,6 +769,101 @@ class LongitudinalComponent extends AnimatedGraph {
   set_opacity(opacity) {
     for (let item of this.svg.getElementsByClassName("background-protons")) {
       item.style.opacity = opacity/100;
+    }
+  }
+}
+
+
+
+
+class TransverseComponent extends AnimatedGraph {
+  curve_color = "red";
+  T2_value = 160;
+  
+  timeout_pause = 1000;
+  
+  overlay = false;
+  
+  
+  constructor(canvas_id="canvas", svg_id="svg", play_id="play-button", overlay_id="overlay-button") {
+    super(canvas_id, svg_id, play_id);
+    
+    this.arrows = [];
+    
+    for (let item of this.svg.getElementsByTagName("g")) {
+      if (this.default_proton === undefined) this.default_proton = item;
+      
+      [item.init_x, item.init_y] = get_item_translation(item);
+      
+      let arrow = item.getElementsByTagName("path")[0];
+      arrow.init_angle = get_item_rotation(arrow);
+      this.arrows.push(arrow);
+      
+      let animateTransform = document.createElementNS("http://www.w3.org/2000/svg", "animateTransform");
+      animateTransform.setAttribute("attributeType", "xml");
+      animateTransform.setAttribute("attributeName", "transform");
+      animateTransform.setAttribute("type", "rotate");
+      animateTransform.setAttribute("from", "0 0 0");
+      animateTransform.setAttribute("to", "360 0 0");
+      animateTransform.setAttribute("dur", "2s");
+      animateTransform.setAttribute("additive", "sum");
+      animateTransform.setAttribute("repeatCount", "indefinite");
+      
+      item.appendChild(animateTransform);
+    }
+    
+    
+    this.overlay_button = document.getElementById(overlay_id);
+    this.overlay_button.addEventListener('click', (e) => {
+      this.overlay_protons();
+    });
+  }
+  
+  
+  compute_curve(t) {
+    if (t < this.RF_pulse) return 0;
+    else                   return Math.exp((-t + this.RF_pulse)/this.T2_value);
+  }
+  
+  
+  update_svg(fraction) {
+    for (let arrow of this.arrows) {
+      arrow.setAttribute("transform", `rotate(${arrow.init_angle * (1-fraction)})`);
+    }
+  }
+  
+  
+  get_timeout() {
+    if (this.time == this.RF_pulse)     return this.timeout_pause;
+    else if (this.time < this.RF_pulse) return this.timeout;
+    else                                return this.timeout * this.compute_curve(this.time);
+  }
+  
+  
+  overlay_protons() {
+    if (this.overlay) {
+      for (let item of this.svg.getElementsByTagName("g")) {
+        if (item == this.default_proton) continue;
+        
+        item.setAttribute("transform", `translate(${item.init_x},${item.init_y})`);
+        let circle = item.getElementsByTagName("circle")[0];
+        circle.style.display = "";
+      }
+      
+      this.overlay = false;
+      this.overlay_button.innerText = "Superposer";
+    }
+    else {
+      for (let item of this.svg.getElementsByTagName("g")) {
+        if (item == this.default_proton) continue;
+        
+        item.setAttribute("transform", `translate(${this.default_proton.init_x},${this.default_proton.init_y})`);
+        let circle = item.getElementsByTagName("circle")[0];
+        circle.style.display = "None";
+      }
+      
+      this.overlay = true;
+      this.overlay_button.innerText = "Séparer";
     }
   }
 }

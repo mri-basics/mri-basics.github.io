@@ -13,7 +13,7 @@
     <p>Essayez de déplacer le TR et le TE sur le graphique. Observez le changement dans les contrastes.</p>
     
     
-    <canvas id="canvas" width="1800" height="750">
+    <canvas id="canvas" width="1024" height="768">
       Désolé, votre navigateur ne prend pas en charge les canvas.
     </canvas>
     
@@ -101,7 +101,7 @@
     
     <script type="text/javascript">
       
-      const se = new SpinEcho("canvas", "svg", "tr", "te", "table");
+      const se = new SpinEcho();
       
       se.set_tissue("LCS", "csf", "blue", 2400, 160, 1, true)
       se.set_tissue("Graisse", "fat", "orange", 260, 80, 0.9, true)

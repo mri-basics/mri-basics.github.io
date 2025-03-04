@@ -2,13 +2,15 @@
 <html lang="fr">
   <head>
     <meta charset="utf-8" />
-    <title>Aimantation macroscopique transversale</title>
+    <title>Aimantation transversale</title>
     <link rel="stylesheet" type="text/css" href="main.css" />
     <script type="text/javascript" src="main.js"></script>
   </head>
   
   <body>
-    <h1>Aimantation macroscopique transversale</h1>
+    <h1>Aimantation transversale</h1>
+    
+    <p>Observez le <strong>déphasage</strong> des spins. Il est lié aux interactions spins-spins.</p>
     
     <canvas id="canvas" width="640" height="480">
       Désolé, votre navigateur ne prend pas en charge les canvas.
@@ -170,7 +172,7 @@
     
     <script type="text/javascript">
       
-      const tc = new TransverseComponent("canvas", "svg", "play-button", "overlay-button");
+      const tc = new TransverseComponent();
       tc.refresh();
       tc.play(true);
       
