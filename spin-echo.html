@@ -17,15 +17,15 @@
       Désolé, votre navigateur ne prend pas en charge les canvas.
     </canvas>
     
-    <div class="view">
-      <div>
-        <p>TR : <span id="tr"></span> - TE : <span id="te"></span> <span style="margin-left: 100px;">Pré-réglages&nbsp;: <button onclick="se.preset(620, 12)">T1</button> <button onclick="se.preset(3000, 100)">T2</button> <button onclick="se.preset(3000, 12)">DP</button></span></p>
+    <div class="horizontal-distribution">
+      <div style="flex-grow: 1; margin-right: 20px;">
+        <p class="horizontal-distribution" style="flex-wrap: wrap;"><span>TR&nbsp;: <input type="number" id="tr"></input> – TE&nbsp;: <input type="number" id="te"></input></span> <span>Zoom&nbsp;: <input type="range" id="slider" min="0" max="6" value="5" step="1" autocomplete="off" oninput="se.zoom(slider.value)" \></span></p>
+        <p>Pré-réglages&nbsp;: <button onclick="se.preset(620, 12)">T1</button> <button onclick="se.preset(3000, 100)">T2</button> <button onclick="se.preset(3000, 12)">DP</button></p>
         
-        
-        <p style="margin-top: 150px">Tableau des valeurs (IRM 1.5T)&nbsp;:</p>
+        <p style="margin-top: 140px">Tableau des valeurs (IRM 1.5T)&nbsp;:</p>
         
         <table id="table">
-          <tr><th></th><th>T1</th><th>T2</th><th>DP</th></tr>
+          <tr><th></th><th>T1</th><th>T2</th><th>&rho;</th></tr>
         </table>
       </div>
       

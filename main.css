@@ -1,7 +1,27 @@
-.view
+.horizontal-distribution
 {
   display: flex;
   justify-content: space-between;
+}
+
+
+.flex-blocks
+{
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 50px;
+}
+
+
+INPUT[type="number"]
+{
+  max-width: 60px;
+}
+
+
+INPUT[type="range"]
+{
+  vertical-align: middle;
 }
 
 

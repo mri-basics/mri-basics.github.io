@@ -26,7 +26,7 @@ function get_item_rotation(item) {
 class InteractiveGraphRenderer {
   margin_left = 50;
   margin_right = 20;
-  margin_top = 100;
+  margin_top = 130;
   margin_bottom = 30;
   
   pulse_width = 8;
@@ -40,20 +40,25 @@ class InteractiveGraphRenderer {
   factor = 2;
   time_steps = 200;
   
-  allow_negative_values = false;
-  
   drag_distance = 8;
   dragged_object = null;
   
   
-  constructor(canvas_id) {
+  constructor(canvas_id, neg_values=false) {
     this.canvas = document.getElementById(canvas_id);
     this.ctx = this.canvas.getContext("2d");
     
+    this.allow_negative_values = neg_values;
+    if (this.allow_negative_values) {
+      this.graph_y = this.margin_top + Math.round(4 * (this.canvas.height - this.margin_top - this.margin_bottom) / 5);
+    }
+    else {
+      this.graph_y = this.canvas.height - this.margin_bottom;
+    }
+    
     this.graph_x = this.margin_left;
-    this.graph_y = this.canvas.height - this.margin_bottom;
     this.graph_width = this.canvas.width - this.margin_left - this.margin_right;
-    this.graph_height = this.canvas.height - this.margin_top - this.margin_bottom;
+    this.graph_height = this.graph_y - this.margin_top;
     
     this.canvas.addEventListener('mousedown', (e) => {
       this.dragged_object = this.get_dragged_object(e);
@@ -72,6 +77,12 @@ class InteractiveGraphRenderer {
     this.canvas.addEventListener('mouseleave', () => {
       this.dragged_object = null;
     });
+  }
+  
+  
+  set_factor(factor) {
+    this.factor = factor;
+    this.refresh();
   }
   
   
@@ -153,11 +164,16 @@ class InteractiveGraphRenderer {
     this.ctx.lineTo(this.canvas.width + this.arrow_offset - this.margin_right + 0.5, pulse_y);
     this.ctx.stroke();
     
+    this.ctx.font = "14px Arial";
+    this.ctx.textAlign = "left";
+    this.ctx.fillText("RF", 2, pulse_y - this.pulse_height / 2);
+    
     
     // Draw X and Y axes
     this.ctx.beginPath();
     this.ctx.moveTo(this.graph_x - 0.5, this.margin_top - this.arrow_offset - 0.5);
-    this.ctx.lineTo(this.graph_x - 0.5, this.graph_y - 0.5);
+    if (this.allow_negative_values) this.ctx.lineTo(this.graph_x - 0.5, this.canvas.height);
+    else                            this.ctx.lineTo(this.graph_x - 0.5, this.graph_y - 0.5);
     this.ctx.stroke();
     
     this.ctx.beginPath();
@@ -194,9 +210,12 @@ class InteractiveGraphRenderer {
     // Draw Y-axis tick marks and percentage labels
     this.ctx.font = "12px Arial";
     this.ctx.textAlign = "right";
-    let tmp_y;
+    let start_i, tmp_y;
     
-    for (let i = 0.25; i <= 1; i += 0.25) {
+    if (this.allow_negative_values) start_i = -0.5;
+    else                            start_i = 0.25;
+    
+    for (let i = start_i; i <= 1; i += 0.25) {
       tmp_y = this.graph_y - 0.5 - Math.round(this.graph_height * i);
       
       this.ctx.beginPath();
@@ -210,9 +229,17 @@ class InteractiveGraphRenderer {
     
     // Draw X-axis tick marks and corresponding time values
     this.ctx.textAlign = "center";
-    let tmp_x;
+    let tmp_x, time_steps;
     
-    for (let i = 0; i < this.graph_width-text_width; i += this.time_steps / this.factor) {
+    if (this.factor < 2)       time_steps = 100;
+    else if (this.factor < 5)  time_steps = 200;
+    else if (this.factor < 10) time_steps = 500;
+    else                       time_steps = 1000;
+    
+    if (this.allow_negative_values) start_i = time_steps / this.factor;
+    else                            start_i = 0;
+    
+    for (let i = start_i; i < this.graph_width-text_width; i += time_steps / this.factor) {
       tmp_x = this.graph_x - 0.5 + i;
       
       this.ctx.beginPath();
@@ -220,7 +247,7 @@ class InteractiveGraphRenderer {
       this.ctx.lineTo(tmp_x, this.graph_y + 4.5);
       this.ctx.stroke();
       
-      this.ctx.fillText(`${i*this.factor} ms`, tmp_x, this.graph_y + 20);
+      this.ctx.fillText(`${Math.round(i*this.factor)} ms`, tmp_x, this.graph_y + 20);
     }
   }
   
@@ -240,24 +267,37 @@ class SpinEcho extends InteractiveGraphRenderer {
   
   TR = 1500;
   TE = 50;
-  min_tr = 10;
+  min_tr = 30;
   min_te = 5;
   
   
   constructor(canvas_id="canvas", svg_id="svg", tr_id="tr", te_id="te", table_id="table") {
     document.getElementById(canvas_id).width = window.innerWidth - 20;
-    super(canvas_id);
+    super(canvas_id, true);
     
     this.svg = document.getElementById(svg_id);
     
-    this.span_TR = document.getElementById(tr_id);
-    this.span_TE = document.getElementById(te_id);
+    this.input_TR = document.getElementById(tr_id);
+    this.input_TE = document.getElementById(te_id);
     
     this.table = document.getElementById(table_id);
     this.values = [];
     
+    
+    this.input_TR.addEventListener('change', () => {
+      this.set_TR(Math.round(Number(this.input_TR.value)));
+      this.refresh();
+    });
+    
+    this.input_TE.addEventListener('change', () => {
+      this.set_TE(Math.round(Number(this.input_TE.value)));
+      this.refresh();
+    });
+    
     window.addEventListener('resize', () => {
-      this.resize();
+      this.canvas.width = window.innerWidth - 20;
+      this.graph_width = this.canvas.width - this.margin_left - this.margin_right;
+      this.refresh();
     });
   }
   
@@ -277,8 +317,22 @@ class SpinEcho extends InteractiveGraphRenderer {
   }
   
   
-  set_tissue(name, id, color, T1, T2, DP, show) {
+  set_TR(value) {
+    this.TR = value;
     
+    if (this.TR < this.TE + this.min_tr) this.TR = this.TE + this.min_tr;
+  }
+  
+  
+  set_TE(value) {
+    this.TE = value;
+    
+    if (this.TE < this.min_te) this.TE = this.min_te;
+    if (this.TE > this.TR - this.min_tr) this.TE = this.TR - this.min_tr;
+  }
+  
+  
+  set_tissue(name, id, color, T1, T2, DP, show) {
     let tr = document.createElement("tr");
     tr.style.color = color;
     
@@ -326,13 +380,26 @@ class SpinEcho extends InteractiveGraphRenderer {
   }
   
   
-  T1(t, values) {
+  _T1(t, values) {
     return values["DP"] * (1 - Math.exp(-t/values["T1"]));
   }
   
   
+  T1(t, values) {
+    let pulse_180 = this.TE / 2;
+    
+    if (t < pulse_180) {
+      return this._T1(t, values);
+    }
+    else {
+      let start = this._T1(pulse_180, values);
+      return -start + this._T1(t-pulse_180, values) * (1 + start);
+    }
+  }
+  
+  
   T2(t, values) {
-    return values["DP"] * (1 - Math.exp(-this.TR/values["T1"])) * Math.exp(-t/values["T2"]);
+    return this.T1(this.TR, values) * Math.exp(-t/values["T2"]);
   }
   
   
@@ -385,6 +452,10 @@ class SpinEcho extends InteractiveGraphRenderer {
     this.ctx.fillStyle = "black";
     this.ctx.globalAlpha = 1;
     
+    this.ctx.font = "10px Arial";
+    this.ctx.textAlign = "center";
+    
+    
     this.ctx.setLineDash([5]);
     for (let i = 0; true; i++) {
       let x = Math.round(this.graph_x + this.TE/this.factor + i*this.TR/this.factor) - 0.5;
@@ -392,9 +463,18 @@ class SpinEcho extends InteractiveGraphRenderer {
       if (x > this.graph_x + this.graph_width) break;
       
       this.ctx.beginPath();
-      this.ctx.moveTo(x, this.graph_y);
-      this.ctx.lineTo(x, this.graph_y-this.graph_height);
+      this.ctx.moveTo(x, this.graph_y-this.graph_height);
+      this.ctx.lineTo(x, this.canvas.height);
       this.ctx.stroke();
+      
+      if (i == 0) {
+        let text = "TE";
+        let width = this.ctx.measureText(text).width;
+        let y = this.graph_y + 10;
+        
+        this.ctx.clearRect(x - width/2, y - 8, width, 10);
+        this.ctx.fillText(text, x, y);
+      }
     }
     
     this.ctx.setLineDash([]);
@@ -404,9 +484,18 @@ class SpinEcho extends InteractiveGraphRenderer {
       if (x > this.graph_x + this.graph_width) break;
       
       this.ctx.beginPath();
-      this.ctx.moveTo(x, this.graph_y);
-      this.ctx.lineTo(x, this.graph_y-this.graph_height);
+      this.ctx.moveTo(x, this.graph_y-this.graph_height);
+      this.ctx.lineTo(x, this.canvas.height);
       this.ctx.stroke();
+      
+      if (i == 0) {
+        let text = "TR";
+        let width = this.ctx.measureText(text).width;
+        let y = this.graph_y + 10;
+        
+        this.ctx.clearRect(x - width/2, y - 8, width, 10);
+        this.ctx.fillText(text, x, y);
+      }
     }
   }
   
@@ -495,27 +584,20 @@ class SpinEcho extends InteractiveGraphRenderer {
     let which, i;
     [which, i] = this.dragged_object;
     
-    if (which == "TR") {
-      this.TR = Math.round(x / (i+1));
-      if (this.TR < this.TE + this.min_tr) this.TR = this.TE + this.min_tr;
-    }
-    else if (which == "TE") {
-      this.TE = x - this.TR * i;
-      if (this.TE < this.min_te) this.TE = this.min_te;
-      if (this.TE > this.TR - this.min_tr) this.TE = this.TR - this.min_tr;
-    }
+    if (which == "TR")      this.set_TR(Math.round(x / (i+1)));
+    else if (which == "TE") this.set_TE(x - this.TR * i);
   }
   
   
   draw_all() {
-    this.span_TR.innerHTML = this.TR;
-    this.span_TE.innerHTML = this.TE;
+    this.input_TR.value = this.TR;
+    this.input_TE.value = this.TE;
     
     
     let T2_values = [];
-    for (let value of this.values) {
-      this.draw_curve(value);
-      T2_values.push(this.T2(this.TE, value));
+    for (let values of this.values) {
+      this.draw_curve(values);
+      T2_values.push(this.T2(this.TE, values));
     }
     
     this.draw_axes();
@@ -525,10 +607,8 @@ class SpinEcho extends InteractiveGraphRenderer {
   }
   
   
-  resize() {
-    this.canvas.width = window.innerWidth - 20;
-    this.graph_width = this.canvas.width - this.margin_left - this.margin_right;
-    this.refresh();
+  zoom(value) {
+    this.set_factor(Math.floor(Math.exp((7-value)/2.5)));
   }
 }
 
@@ -680,8 +760,10 @@ class LongitudinalComponent extends AnimatedGraph {
   
   timeout_pause = 1000;
   
+  opacity = 0.1;
   
-  constructor(canvas_id="canvas", svg_id="svg", play_id="play-button", parallel_id="parallel", anti_parallel_id="anti-parallel") {
+  
+  constructor(canvas_id="canvas", svg_id="svg", play_id="play-button", b0_id="b0-button", parallel_id="parallel", anti_parallel_id="anti-parallel") {
     super(canvas_id, svg_id, play_id);
     
     this.span_parallel = document.getElementById(parallel_id);
@@ -691,9 +773,21 @@ class LongitudinalComponent extends AnimatedGraph {
     this.arrows_bg_count = 0;
     
     for (let item of this.svg.getElementsByTagName("g")) {
-      if (item.id == "B0") continue;
+      if (item.id == "B0") {
+        this.B0 = item;
+        this.B0.active = true;
+        continue;
+      }
+      else if (item.id == "vector") {
+        [item.init_x, item.init_y] = get_item_translation(item);
+        this.vector = item;
+        continue;
+      }
+      
       
       let arrow = item.getElementsByTagName("path")[0];
+      item.arrow = arrow;
+      item.init_color = arrow.style.stroke;
       
       if (this.parallel === undefined) {
         this.parallel = arrow;
@@ -724,6 +818,11 @@ class LongitudinalComponent extends AnimatedGraph {
     }
     
     this.arrows = this.arrows.sort(() => Math.random() - 0.5);
+    
+    this.B0_button = document.getElementById(b0_id);
+    this.B0_button.addEventListener('click', (e) => {
+      this.set_b0();
+    });
   }
   
   
@@ -734,6 +833,8 @@ class LongitudinalComponent extends AnimatedGraph {
   
   
   update_svg(fraction) {
+    if (!this.B0.active) return;
+    
     let length = this.arrows.length / 2;
     let arrow;
     let count = 0;
@@ -754,6 +855,8 @@ class LongitudinalComponent extends AnimatedGraph {
       }
     }
     
+    this.vector.setAttribute("transform", `matrix(${fraction},0,0,${fraction},${this.vector.init_x},${this.vector.init_y})`);
+    
     this.span_parallel.innerText = this.arrows_bg_count / 2 + this.arrows.length - count;
     this.span_anti_parallel.innerText = this.arrows_bg_count / 2 + count;
   }
@@ -767,8 +870,55 @@ class LongitudinalComponent extends AnimatedGraph {
   
   
   set_opacity(opacity) {
+    this.opacity = opacity/100;
+    
+    if (!this.B0.active) return;
+    
     for (let item of this.svg.getElementsByClassName("background-protons")) {
-      item.style.opacity = opacity/100;
+      item.style.opacity = this.opacity;
+    }
+  }
+  
+  
+  set_b0() {
+    let protons = [...this.svg.getElementsByClassName("extra-protons"), ...this.svg.getElementsByClassName("background-protons")];
+    
+    if (this.B0.active) {
+      this.B0.active = false;
+      this.B0.style.display = "none";
+      this.vector.style.display = "none";
+      
+      for (let item of protons) {
+        item.arrow.style.stroke = "red";
+        item.arrow.setAttribute("transform", `rotate(${Math.random() * 360})`);
+        
+        if (item.classList.contains("background-protons")) item.style.opacity = 1;
+      }
+      
+      
+      this.span_parallel.innerText = "–";
+      this.span_anti_parallel.innerText = "–";
+      
+      this.B0_button.innerText = "Réactiver B0";
+    }
+    else {
+      this.B0.active = true;
+      this.B0.style.display = "";
+      this.vector.style.display = "";
+      
+      for (let item of protons) {
+        item.arrow.style.stroke = item.init_color;
+        item.arrow.setAttribute("transform", "rotate(0)");
+        
+        if (item.classList.contains("background-protons")) item.style.opacity = this.opacity;
+      }
+      
+      this.span_parallel.innerText = "–";
+      this.span_anti_parallel.innerText = "–";
+      
+      this.B0_button.innerText = "Désactiver B0";
+      
+      this.refresh();
     }
   }
 }
@@ -783,21 +933,30 @@ class TransverseComponent extends AnimatedGraph {
   timeout_pause = 1000;
   
   overlay = false;
+  animation_timeout = 50;
+  animation_progress = 0;
   
   
   constructor(canvas_id="canvas", svg_id="svg", play_id="play-button", overlay_id="overlay-button") {
     super(canvas_id, svg_id, play_id);
     
+    this.protons = [];
     this.arrows = [];
     
     for (let item of this.svg.getElementsByTagName("g")) {
-      if (this.default_proton === undefined) this.default_proton = item;
-      
       [item.init_x, item.init_y] = get_item_translation(item);
       
-      let arrow = item.getElementsByTagName("path")[0];
-      arrow.init_angle = get_item_rotation(arrow);
-      this.arrows.push(arrow);
+      if (item.id == "vector") {
+        this.vector = item;
+      }
+      else {
+        if (this.default_proton === undefined) this.default_proton = item;
+        this.protons.push(item);
+        
+        let arrow = item.getElementsByTagName("path")[0];
+        arrow.init_angle = get_item_rotation(arrow);
+        this.arrows.push(arrow);
+      }
       
       let animateTransform = document.createElementNS("http://www.w3.org/2000/svg", "animateTransform");
       animateTransform.setAttribute("attributeType", "xml");
@@ -830,6 +989,8 @@ class TransverseComponent extends AnimatedGraph {
     for (let arrow of this.arrows) {
       arrow.setAttribute("transform", `rotate(${arrow.init_angle * (1-fraction)})`);
     }
+    
+    this.vector.setAttribute("transform", `matrix(${fraction},0,0,${fraction},${this.vector.init_x},${this.vector.init_y})`);
   }
   
   
@@ -842,28 +1003,43 @@ class TransverseComponent extends AnimatedGraph {
   
   overlay_protons() {
     if (this.overlay) {
-      for (let item of this.svg.getElementsByTagName("g")) {
-        if (item == this.default_proton) continue;
-        
-        item.setAttribute("transform", `translate(${item.init_x},${item.init_y})`);
-        let circle = item.getElementsByTagName("circle")[0];
-        circle.style.display = "";
-      }
-      
       this.overlay = false;
       this.overlay_button.innerText = "Superposer";
     }
     else {
-      for (let item of this.svg.getElementsByTagName("g")) {
-        if (item == this.default_proton) continue;
-        
-        item.setAttribute("transform", `translate(${this.default_proton.init_x},${this.default_proton.init_y})`);
-        let circle = item.getElementsByTagName("circle")[0];
-        circle.style.display = "None";
-      }
-      
       this.overlay = true;
       this.overlay_button.innerText = "Séparer";
+    }
+    
+    if (this.animation_progress == 0 || this.animation_progress == 1) this.overlay_animation();
+  }
+  
+  
+  overlay_animation() {
+    if (this.overlay) this.animation_progress += 0.1;
+    else              this.animation_progress -= 0.1;
+    
+    if (this.animation_progress < 0) this.animation_progress = 0;
+    if (this.animation_progress > 1) this.animation_progress = 1;
+    
+    let x, y, circle;
+    
+    for (let item of this.protons) {
+      if (item == this.default_proton) continue;
+      
+      x = item.init_x + this.animation_progress * (this.default_proton.init_x - item.init_x);
+      y = item.init_y + this.animation_progress * (this.default_proton.init_y - item.init_y);
+      
+      item.setAttribute("transform", `translate(${x},${y})`);
+      
+      circle = item.getElementsByTagName("circle")[0];
+      circle.style.opacity = 1-this.animation_progress;
+    }
+    
+    if (this.animation_progress > 0 && this.animation_progress < 1) {
+      setTimeout(() => {
+        this.overlay_animation();
+      }, this.animation_timeout);
     }
   }
 }
