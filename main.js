@@ -43,6 +43,8 @@ class InteractiveGraphRenderer {
   drag_distance = 8;
   dragged_object = null;
   
+  y_axis_label = "";
+  
   
   constructor(canvas_id, neg_values=false) {
     this.canvas = document.getElementById(canvas_id);
@@ -199,7 +201,7 @@ class InteractiveGraphRenderer {
     // Write axis labels
     this.ctx.font = "14px Arial";
     this.ctx.textAlign = "left";
-    this.ctx.fillText("Signal", 2, this.margin_top - this.arrow_height - this.arrow_offset);
+    this.ctx.fillText(this.y_axis_label, 2, this.margin_top - this.arrow_height - this.arrow_offset);
     
     let text = "Temps";
     let text_width = Math.ceil(this.ctx.measureText(text).width);
@@ -261,6 +263,8 @@ class InteractiveGraphRenderer {
 
 
 class SpinEcho extends InteractiveGraphRenderer {
+  y_axis_label = "Signal";
+  
   gradient_width = 20;
   gradient_margin = 5;
   gradient_x_offset = 20;
@@ -755,6 +759,7 @@ class AnimatedGraph extends InteractiveGraphRenderer {
 
 
 class LongitudinalComponent extends AnimatedGraph {
+  y_axis_label = "Mz";
   curve_color = "blue";
   T1_value = 260;
   
@@ -805,16 +810,7 @@ class LongitudinalComponent extends AnimatedGraph {
         this.arrows_bg_count++;
       }
       
-      let animateTransform = document.createElementNS("http://www.w3.org/2000/svg", "animateTransform");
-      animateTransform.setAttribute("attributeType", "xml");
-      animateTransform.setAttribute("attributeName", "transform");
-      animateTransform.setAttribute("type", "rotate");
-      animateTransform.setAttribute("values", "-5 0 0; 5 0 0; -5 0 0");
-      animateTransform.setAttribute("dur", "0.5s");
-      animateTransform.setAttribute("additive", "sum");
-      animateTransform.setAttribute("repeatCount", "indefinite");
-      
-      item.appendChild(animateTransform);
+      this.set_animation(item);
     }
     
     this.arrows = this.arrows.sort(() => Math.random() - 0.5);
@@ -827,6 +823,8 @@ class LongitudinalComponent extends AnimatedGraph {
   
   
   compute_curve(t) {
+    if (!this.B0.active) return 0;
+    
     if (t < this.RF_pulse) return 1;
     else                   return 1 - Math.exp((-t + this.RF_pulse)/this.T1_value);
   }
@@ -869,6 +867,20 @@ class LongitudinalComponent extends AnimatedGraph {
   }
   
   
+  set_animation(item) {
+    item.animateTransform = document.createElementNS("http://www.w3.org/2000/svg", "animateTransform");
+    item.animateTransform.setAttribute("attributeType", "xml");
+    item.animateTransform.setAttribute("attributeName", "transform");
+    item.animateTransform.setAttribute("type", "rotate");
+    item.animateTransform.setAttribute("values", "-5 0 0; 5 0 0; -5 0 0");
+    item.animateTransform.setAttribute("dur", "0.5s");
+    item.animateTransform.setAttribute("additive", "sum");
+    item.animateTransform.setAttribute("repeatCount", "indefinite");
+    
+    item.appendChild(item.animateTransform);
+  }
+  
+  
   set_opacity(opacity) {
     this.opacity = opacity/100;
     
@@ -890,7 +902,22 @@ class LongitudinalComponent extends AnimatedGraph {
       
       for (let item of protons) {
         item.arrow.style.stroke = "red";
-        item.arrow.setAttribute("transform", `rotate(${Math.random() * 360})`);
+        
+        item.removeChild(item.animateTransform);
+        
+        item.animateTransform = document.createElementNS("http://www.w3.org/2000/svg", "animateTransform");
+        item.animateTransform.setAttribute("attributeType", "xml");
+        item.animateTransform.setAttribute("attributeName", "transform");
+        item.animateTransform.setAttribute("type", "rotate");
+        item.animateTransform.setAttribute("values", `0 0 0; ${Math.random() * 360 - 180} 0 0`);
+        item.animateTransform.setAttribute("dur", "0.5s");
+        item.animateTransform.setAttribute("additive", "sum");
+        item.animateTransform.setAttribute("repeatCount", "1");
+        item.animateTransform.setAttribute("fill", "freeze");
+        item.animateTransform.setAttribute("begin", "indefinite");
+        
+        item.appendChild(item.animateTransform);
+        item.animateTransform.beginElement();
         
         if (item.classList.contains("background-protons")) item.style.opacity = 1;
       }
@@ -908,7 +935,9 @@ class LongitudinalComponent extends AnimatedGraph {
       
       for (let item of protons) {
         item.arrow.style.stroke = item.init_color;
-        item.arrow.setAttribute("transform", "rotate(0)");
+        
+        item.removeChild(item.animateTransform);
+        this.set_animation(item);
         
         if (item.classList.contains("background-protons")) item.style.opacity = this.opacity;
       }
@@ -927,6 +956,7 @@ class LongitudinalComponent extends AnimatedGraph {
 
 
 class TransverseComponent extends AnimatedGraph {
+  y_axis_label = "Mxy";
   curve_color = "red";
   T2_value = 160;
   
