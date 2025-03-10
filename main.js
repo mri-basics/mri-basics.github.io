@@ -214,10 +214,10 @@ class InteractiveGraphRenderer {
     this.ctx.textAlign = "right";
     let start_i, tmp_y;
     
-    if (this.allow_negative_values) start_i = -0.5;
-    else                            start_i = 0.25;
+    if (this.allow_negative_values) start_i = -0.3;
+    else                            start_i = 0.1;
     
-    for (let i = start_i; i <= 1; i += 0.25) {
+    for (let i = start_i; i <= 1; i += 0.1) {
       tmp_y = this.graph_y - 0.5 - Math.round(this.graph_height * i);
       
       this.ctx.beginPath();
@@ -225,7 +225,7 @@ class InteractiveGraphRenderer {
       this.ctx.lineTo(this.graph_x + 4.5, tmp_y);
       this.ctx.stroke();
       
-      this.ctx.fillText(`${i*100} %`, this.graph_x - 8, tmp_y + 4);
+      this.ctx.fillText(`${Math.round(i*100)} %`, this.graph_x - 8, tmp_y + 4);
     }
     
     
