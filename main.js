@@ -33,14 +33,14 @@ class InteractiveGraphRenderer {
   pulse_height = 40;
   
   arrow_width = 6;
-  arrow_height = 10;
+  arrow_height = 20;
   arrow_offset = 5;
   
   line_width = 2;
   factor = 2;
   time_steps = 200;
   
-  drag_distance = 8;
+  drag_distance = 10;
   dragged_object = null;
   
   y_axis_label = "";
@@ -231,25 +231,32 @@ class InteractiveGraphRenderer {
     
     // Draw X-axis tick marks and corresponding time values
     this.ctx.textAlign = "center";
-    let tmp_x, time_steps;
+    let tmp_x, time_steps, toggle;
     
-    if (this.factor < 2)       time_steps = 100;
-    else if (this.factor < 5)  time_steps = 200;
-    else if (this.factor < 10) time_steps = 500;
-    else                       time_steps = 1000;
+    if (this.factor < 2)       time_steps = 50;
+    else if (this.factor < 5)  time_steps = 100;
+    else if (this.factor < 10) time_steps = 250;
+    else                       time_steps = 500;
     
-    if (this.allow_negative_values) start_i = time_steps / this.factor;
-    else                            start_i = 0;
+    if (this.allow_negative_values) {
+      start_i = time_steps / this.factor;
+      toggle = 1;
+    }
+    else {
+      start_i = 0;
+      toggle = 0;
+    }
     
     for (let i = start_i; i < this.graph_width-text_width; i += time_steps / this.factor) {
-      tmp_x = this.graph_x - 0.5 + i;
+      toggle = 1 - toggle;
+      tmp_x = this.graph_x - 0.5 + Math.round(i);
       
       this.ctx.beginPath();
       this.ctx.moveTo(tmp_x, this.graph_y - 5.5);
       this.ctx.lineTo(tmp_x, this.graph_y + 4.5);
       this.ctx.stroke();
       
-      this.ctx.fillText(`${Math.round(i*this.factor)} ms`, tmp_x, this.graph_y + 20);
+      if (toggle) this.ctx.fillText(`${Math.round(i*this.factor)} ms`, tmp_x, this.graph_y + 20);
     }
   }
   
@@ -271,7 +278,7 @@ class SpinEcho extends InteractiveGraphRenderer {
   
   TR = 1500;
   TE = 50;
-  min_tr = 30;
+  min_tr = 100;
   min_te = 5;
   
   
@@ -312,9 +319,16 @@ class SpinEcho extends InteractiveGraphRenderer {
     
     let max_TR = Math.ceil(this.graph_width * this.factor / this.TR);
     
+    let offset = 0;
+    if (this.TE < this.drag_distance*2) offset = this.drag_distance - this.TE/2;
+    
+    let tmp_x;
     for (let i = 0; i < max_TR; i++) {
-      if (Math.abs(x - ((this.TR * i + this.TE) / this.factor)) < this.drag_distance) return ["TE", i];
-      if (Math.abs(x - (this.TR * (i+1) / this.factor)) < this.drag_distance) return ["TR", i];
+      tmp_x = (this.TR * i + this.TE) / this.factor;
+      if (x > tmp_x - this.drag_distance + offset && x < tmp_x + this.drag_distance + offset) return ["TE", i];
+      
+      tmp_x = this.TR * (i+1) / this.factor;
+      if (x > tmp_x - this.drag_distance - offset && x < tmp_x + this.drag_distance - offset) return ["TR", i];
     }
     
     return null;
@@ -623,15 +637,34 @@ class AnimatedGraph extends InteractiveGraphRenderer {
   time = 1;
   curve_color = "black";
   RF_pulse = 100;
+  tissue_value = 0;
+  hline_ratio = 0;
   
   play_state = false;
   timeout = 50;
   
   
-  constructor(canvas_id, svg_id, play_id) {
+  constructor(canvas_id, svg_id, tvalue_id, delay_id, play_id) {
     super(canvas_id);
     
+    this.RF_pulse_init = this.RF_pulse;
+    
     this.svg = document.getElementById(svg_id);
+    
+    this.input_tvalue = document.getElementById(tvalue_id);
+    this.input_tvalue.addEventListener('change', () => {
+      this.set_tissue_value(Math.round(Number(this.input_tvalue.value)));
+      this.refresh();
+    });
+    
+    this.delay_checkbox = document.getElementById(delay_id);
+    this.delay_checkbox.checked = true;
+    this.delay_checkbox.addEventListener('change', () => {
+      if (this.RF_pulse) this.RF_pulse = 0;
+      else               this.RF_pulse = this.RF_pulse_init;
+      
+      this.refresh();
+    });
     
     this.play_button = document.getElementById(play_id);
     this.play_button.addEventListener('click', (e) => {
@@ -649,6 +682,14 @@ class AnimatedGraph extends InteractiveGraphRenderer {
   }
   
   
+  set_tissue_value(value) {
+    this.tissue_value = value;
+    if (this.tissue_value < 10) this.tissue_value = 10;
+    
+    this.input_tvalue.value = this.tissue_value;
+  }
+  
+  
   update_drag_n_drop(x, y) {
     this.time = x;
     if (this.time < 1) this.time = 1;
@@ -660,6 +701,22 @@ class AnimatedGraph extends InteractiveGraphRenderer {
   
   compute_curve(t) {
     return 0;
+  }
+  
+  
+  draw_hline() {
+    this.ctx.lineWidth = 1;
+    this.ctx.strokeStyle = "lightgray";
+    this.ctx.globalAlpha = 1;
+    
+    this.ctx.setLineDash([5]);
+    
+    let y = this.graph_y - Math.round(this.graph_height * this.hline_ratio) - 0.5;
+    
+    this.ctx.beginPath();
+    this.ctx.moveTo(this.graph_x - 0.5, y);
+    this.ctx.lineTo(this.canvas.width + this.arrow_offset - this.margin_right + 0.5, y);
+    this.ctx.stroke();
   }
   
   
@@ -686,10 +743,10 @@ class AnimatedGraph extends InteractiveGraphRenderer {
   draw_bar() {
     this.ctx.lineWidth = 1;
     this.ctx.strokeStyle = "black";
-    this.ctx.fillStyle = "black";
     this.ctx.globalAlpha = 1;
     
-    this.ctx.setLineDash([5]);
+    this.ctx.setLineDash([]);
+    
     let x = Math.round(this.graph_x + this.time/this.factor) - 0.5;
     
     this.ctx.beginPath();
@@ -700,6 +757,7 @@ class AnimatedGraph extends InteractiveGraphRenderer {
   
   
   draw_all() {
+    this.draw_hline();
     this.draw_curve();
     this.draw_axes();
     this.draw_bar();
@@ -761,15 +819,18 @@ class AnimatedGraph extends InteractiveGraphRenderer {
 class LongitudinalComponent extends AnimatedGraph {
   y_axis_label = "Mz";
   curve_color = "blue";
-  T1_value = 260;
+  tissue_value = 260;
+  hline_ratio = 0.63;
   
   timeout_pause = 1000;
   
   opacity = 0.1;
   
   
-  constructor(canvas_id="canvas", svg_id="svg", play_id="play-button", b0_id="b0-button", parallel_id="parallel", anti_parallel_id="anti-parallel") {
-    super(canvas_id, svg_id, play_id);
+  constructor(canvas_id="canvas", svg_id="svg", tvalue_id="tvalue", delay_id="delay", play_id="play-button", b0_id="b0-button", parallel_id="parallel", anti_parallel_id="anti-parallel") {
+    super(canvas_id, svg_id, tvalue_id, delay_id, play_id);
+    
+    this.input_tvalue.value = this.tissue_value;
     
     this.span_parallel = document.getElementById(parallel_id);
     this.span_anti_parallel = document.getElementById(anti_parallel_id);
@@ -826,7 +887,7 @@ class LongitudinalComponent extends AnimatedGraph {
     if (!this.B0.active) return 0;
     
     if (t < this.RF_pulse) return 1;
-    else                   return 1 - Math.exp((-t + this.RF_pulse)/this.T1_value);
+    else                   return 1 - Math.exp((-t + this.RF_pulse)/this.tissue_value);
   }
   
   
@@ -946,9 +1007,9 @@ class LongitudinalComponent extends AnimatedGraph {
       this.span_anti_parallel.innerText = "–";
       
       this.B0_button.innerText = "Désactiver B0";
-      
-      this.refresh();
     }
+      
+    this.refresh();
   }
 }
 
@@ -958,7 +1019,8 @@ class LongitudinalComponent extends AnimatedGraph {
 class TransverseComponent extends AnimatedGraph {
   y_axis_label = "Mxy";
   curve_color = "red";
-  T2_value = 160;
+  tissue_value = 160;
+  hline_ratio = 0.37;
   
   timeout_pause = 1000;
   
@@ -967,8 +1029,10 @@ class TransverseComponent extends AnimatedGraph {
   animation_progress = 0;
   
   
-  constructor(canvas_id="canvas", svg_id="svg", play_id="play-button", overlay_id="overlay-button") {
-    super(canvas_id, svg_id, play_id);
+  constructor(canvas_id="canvas", svg_id="svg", tvalue_id="tvalue", delay_id="delay", play_id="play-button", overlay_id="overlay-button") {
+    super(canvas_id, svg_id, tvalue_id, delay_id, play_id);
+    
+    this.input_tvalue.value = this.tissue_value;
     
     this.protons = [];
     this.arrows = [];
@@ -1011,7 +1075,7 @@ class TransverseComponent extends AnimatedGraph {
   
   compute_curve(t) {
     if (t < this.RF_pulse) return 0;
-    else                   return Math.exp((-t + this.RF_pulse)/this.T2_value);
+    else                   return Math.exp((-t + this.RF_pulse)/this.tissue_value);
   }
   
   
