@@ -33,7 +33,7 @@ class InteractiveGraphRenderer {
   pulse_height = 40;
   
   arrow_width = 6;
-  arrow_height = 20;
+  arrow_height = 10;
   arrow_offset = 5;
   
   line_width = 2;
