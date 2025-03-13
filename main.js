@@ -27,7 +27,8 @@ class InteractiveGraphRenderer {
   margin_left = 50;
   margin_right = 20;
   margin_top = 130;
-  margin_bottom = 30;
+  margin_bottom_std = 30;
+  margin_bottom_neg = 15;
   
   pulse_width = 8;
   pulse_height = 40;
@@ -36,6 +37,10 @@ class InteractiveGraphRenderer {
   arrow_height = 10;
   arrow_offset = 5;
   
+  y_axis_label = "";
+  y_axis_min = -1;
+  negative_values = false;
+  
   line_width = 2;
   factor = 2;
   time_steps = 200;
@@ -43,24 +48,12 @@ class InteractiveGraphRenderer {
   drag_distance = 10;
   dragged_object = null;
   
-  y_axis_label = "";
   
-  
-  constructor(canvas_id, neg_values=false) {
+  constructor(canvas_id) {
     this.canvas = document.getElementById(canvas_id);
     this.ctx = this.canvas.getContext("2d");
     
-    this.allow_negative_values = neg_values;
-    if (this.allow_negative_values) {
-      this.graph_y = this.margin_top + Math.round(4 * (this.canvas.height - this.margin_top - this.margin_bottom) / 5);
-    }
-    else {
-      this.graph_y = this.canvas.height - this.margin_bottom;
-    }
-    
-    this.graph_x = this.margin_left;
-    this.graph_width = this.canvas.width - this.margin_left - this.margin_right;
-    this.graph_height = this.graph_y - this.margin_top;
+    this.update_graph_coordinates();
     
     this.canvas.addEventListener('mousedown', (e) => {
       this.dragged_object = this.get_dragged_object(e);
@@ -79,6 +72,22 @@ class InteractiveGraphRenderer {
     this.canvas.addEventListener('mouseleave', () => {
       this.dragged_object = null;
     });
+  }
+  
+  
+  update_graph_coordinates() {
+    if (this.negative_values) {
+      this.margin_bottom = this.margin_bottom_neg;
+      this.graph_y = this.margin_top + Math.round((this.canvas.height - this.margin_top - this.margin_bottom) / (1 - this.y_axis_min));
+    }
+    else {
+      this.margin_bottom = this.margin_bottom_std;
+      this.graph_y = this.canvas.height - this.margin_bottom;
+    }
+    
+    this.graph_x = this.margin_left;
+    this.graph_width = this.canvas.width - this.margin_left - this.margin_right;
+    this.graph_height = this.graph_y - this.margin_top;
   }
   
   
@@ -105,8 +114,9 @@ class InteractiveGraphRenderer {
     if (event && this.dragged_object) {
       let rect = this.canvas.getBoundingClientRect();
       let x = event.clientX - rect.left - this.graph_x;
+      let y = this.graph_y - event.clientY + rect.top;
       
-      this.update_drag_n_drop(x * this.factor, null);
+      this.update_drag_n_drop(x, y);
     }
     
     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
@@ -125,7 +135,7 @@ class InteractiveGraphRenderer {
   
   draw_axes() {
     // If negative values are not allowed, clear the bottom margin area
-    if (!this.allow_negative_values) this.ctx.clearRect(0, this.graph_y + 0.5, this.canvas.width, this.margin_bottom);
+    if (!this.negative_values) this.ctx.clearRect(0, this.graph_y + 0.5, this.canvas.width, this.margin_bottom);
     
     // Set drawing properties
     this.ctx.lineWidth = 1;
@@ -174,8 +184,8 @@ class InteractiveGraphRenderer {
     // Draw X and Y axes
     this.ctx.beginPath();
     this.ctx.moveTo(this.graph_x - 0.5, this.margin_top - this.arrow_offset - 0.5);
-    if (this.allow_negative_values) this.ctx.lineTo(this.graph_x - 0.5, this.canvas.height);
-    else                            this.ctx.lineTo(this.graph_x - 0.5, this.graph_y - 0.5);
+    if (this.negative_values) this.ctx.lineTo(this.graph_x - 0.5, this.graph_y - Math.round(this.graph_height * this.y_axis_min) + this.arrow_height - 0.5);
+    else                      this.ctx.lineTo(this.graph_x - 0.5, this.graph_y - 0.5);
     this.ctx.stroke();
     
     this.ctx.beginPath();
@@ -214,8 +224,8 @@ class InteractiveGraphRenderer {
     this.ctx.textAlign = "right";
     let start_i, tmp_y;
     
-    if (this.allow_negative_values) start_i = -0.3;
-    else                            start_i = 0.1;
+    if (this.negative_values) start_i = this.y_axis_min;
+    else                      start_i = 0;
     
     for (let i = start_i; i <= 1; i += 0.1) {
       tmp_y = this.graph_y - 0.5 - Math.round(this.graph_height * i);
@@ -238,7 +248,7 @@ class InteractiveGraphRenderer {
     else if (this.factor < 10) time_steps = 250;
     else                       time_steps = 500;
     
-    if (this.allow_negative_values) {
+    if (this.negative_values) {
       start_i = time_steps / this.factor;
       toggle = 1;
     }
@@ -271,6 +281,8 @@ class InteractiveGraphRenderer {
 
 class SpinEcho extends InteractiveGraphRenderer {
   y_axis_label = "Signal";
+  y_axis_min = -0.3;
+  negative_values = true;
   
   gradient_width = 20;
   gradient_margin = 5;
@@ -283,8 +295,10 @@ class SpinEcho extends InteractiveGraphRenderer {
   
   
   constructor(canvas_id="canvas", svg_id="svg", tr_id="tr", te_id="te", table_id="table") {
-    document.getElementById(canvas_id).width = window.innerWidth - 20;
-    super(canvas_id, true);
+    super(canvas_id);
+    
+    this.canvas.width = window.innerWidth - 20;
+    this.update_graph_coordinates();
     
     this.svg = document.getElementById(svg_id);
     
@@ -481,8 +495,8 @@ class SpinEcho extends InteractiveGraphRenderer {
       if (x > this.graph_x + this.graph_width) break;
       
       this.ctx.beginPath();
-      this.ctx.moveTo(x, this.graph_y-this.graph_height);
-      this.ctx.lineTo(x, this.canvas.height);
+      this.ctx.moveTo(x, this.graph_y - this.graph_height);
+      this.ctx.lineTo(x, this.graph_y - Math.round(this.graph_height * this.y_axis_min) + this.arrow_height - 0.5);
       this.ctx.stroke();
       
       if (i == 0) {
@@ -502,8 +516,8 @@ class SpinEcho extends InteractiveGraphRenderer {
       if (x > this.graph_x + this.graph_width) break;
       
       this.ctx.beginPath();
-      this.ctx.moveTo(x, this.graph_y-this.graph_height);
-      this.ctx.lineTo(x, this.canvas.height);
+      this.ctx.moveTo(x, this.graph_y - this.graph_height);
+      this.ctx.lineTo(x, this.graph_y - Math.round(this.graph_height * this.y_axis_min) + this.arrow_height - 0.5);
       this.ctx.stroke();
       
       if (i == 0) {
@@ -602,8 +616,8 @@ class SpinEcho extends InteractiveGraphRenderer {
     let which, i;
     [which, i] = this.dragged_object;
     
-    if (which == "TR")      this.set_TR(Math.round(x / (i+1)));
-    else if (which == "TE") this.set_TE(x - this.TR * i);
+    if (which == "TR")      this.set_TR(Math.round(x * this.factor / (i+1)));
+    else if (which == "TE") this.set_TE(x * this.factor - this.TR * i);
   }
   
   
@@ -636,7 +650,10 @@ class SpinEcho extends InteractiveGraphRenderer {
 class AnimatedGraph extends InteractiveGraphRenderer {
   time = 1;
   curve_color = "black";
+  
   RF_pulse = 100;
+  RF_angle = 90;
+  
   tissue_value = 0;
   hline_ratio = 0;
   
@@ -691,8 +708,9 @@ class AnimatedGraph extends InteractiveGraphRenderer {
   
   
   update_drag_n_drop(x, y) {
-    this.time = x;
-    if (this.time < 1) this.time = 1;
+    this.time = x * this.factor;
+    
+    if (this.time < 0) this.time = 0;
     else if (this.time > this.graph_width * this.factor) this.time = this.graph_width * this.factor;
     
     if (this.play_state) this.play(false);
@@ -750,9 +768,19 @@ class AnimatedGraph extends InteractiveGraphRenderer {
     let x = Math.round(this.graph_x + this.time/this.factor) - 0.5;
     
     this.ctx.beginPath();
-    this.ctx.moveTo(x, this.graph_y);
+    if (this.negative_values) this.ctx.moveTo(x, this.graph_y + this.graph_height + this.arrow_height);
+    else                      this.ctx.moveTo(x, this.graph_y);
     this.ctx.lineTo(x, this.graph_y - this.graph_height - this.arrow_height);
     this.ctx.stroke();
+    
+    
+    if (this.dragged_object) {
+      this.ctx.fillStyle = "black";
+      this.ctx.font = "10px Arial";
+      this.ctx.textAlign = "center";
+      
+      this.ctx.fillText(`${this.time} ms`, x, this.graph_y - this.graph_height - this.arrow_height - 5);
+    }
   }
   
   
@@ -767,7 +795,7 @@ class AnimatedGraph extends InteractiveGraphRenderer {
   
   
   get_pulses() {
-    return [[90, this.RF_pulse]];
+    return [[this.RF_angle, this.RF_pulse]];
   }
   
   
@@ -795,7 +823,7 @@ class AnimatedGraph extends InteractiveGraphRenderer {
   
   update_progress() {
     this.time += this.factor;
-    if (this.time > this.graph_width * this.factor) this.time = 1;
+    if (this.time > this.graph_width * this.factor) this.time = 0;
     if (this.time > this.RF_pulse && this.time - this.RF_pulse < this.factor) this.time = this.RF_pulse;
     
     this.refresh();
@@ -818,6 +846,7 @@ class AnimatedGraph extends InteractiveGraphRenderer {
 
 class LongitudinalComponent extends AnimatedGraph {
   y_axis_label = "Mz";
+  
   curve_color = "blue";
   tissue_value = 260;
   hline_ratio = 0.63;
@@ -886,22 +915,31 @@ class LongitudinalComponent extends AnimatedGraph {
   compute_curve(t) {
     if (!this.B0.active) return 0;
     
-    if (t < this.RF_pulse) return 1;
-    else                   return 1 - Math.exp((-t + this.RF_pulse)/this.tissue_value);
+    if (t < this.RF_pulse)       return 1;
+    else if (this.RF_angle > 90) return 2 * (1 - Math.exp((-t + this.RF_pulse)/this.tissue_value)) - 1;
+    else                         return 1 - Math.exp((-t + this.RF_pulse)/this.tissue_value);
   }
   
   
   update_svg(fraction) {
     if (!this.B0.active) return;
     
-    let length = this.arrows.length / 2;
-    let arrow;
+    let length, max, arrow;
     let count = 0;
+    
+    if (this.RF_angle > 90) {
+      length = this.arrows.length;
+      max = Math.round((1 + fraction) * length / 2) -1;
+    }
+    else {
+      length = this.arrows.length / 2;
+      max = Math.round(fraction * length) -1;
+    }
     
     for (let i = 0; i < length; i++) {
       arrow = this.arrows[i];
       
-      if (i <= Math.round(fraction * length)-1) {
+      if (i <= max) {
         arrow.style.stroke = this.parallel.style.stroke;
         arrow.style.markerStart = this.parallel.style.markerStart;
         arrow.style.markerEnd = this.parallel.style.markerEnd;
@@ -1011,6 +1049,24 @@ class LongitudinalComponent extends AnimatedGraph {
       
     this.refresh();
   }
+  
+  
+  set_rf_angle(angle) {
+    this.RF_angle = angle;
+    
+    if (angle > 90) this.negative_values = true;
+    else            this.negative_values = false;
+    
+    for (let arrow of this.arrows) {
+      arrow.style.stroke = this.parallel.style.stroke;
+      arrow.style.markerStart = this.parallel.style.markerStart;
+      arrow.style.markerEnd = this.parallel.style.markerEnd;
+    }
+    
+    this.update_graph_coordinates();
+    
+    this.refresh();
+  }
 }
 
 
@@ -1018,6 +1074,7 @@ class LongitudinalComponent extends AnimatedGraph {
 
 class TransverseComponent extends AnimatedGraph {
   y_axis_label = "Mxy";
+  
   curve_color = "red";
   tissue_value = 160;
   hline_ratio = 0.37;
