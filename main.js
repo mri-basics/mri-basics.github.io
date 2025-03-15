@@ -413,7 +413,7 @@ class SpinEcho extends InteractiveGraphRenderer {
   
   
   _T1(t, values) {
-    return values["DP"] * (1 - Math.exp(-t/values["T1"]));
+    return 1 - Math.exp(-t/values["T1"]);
   }
   
   
@@ -421,11 +421,11 @@ class SpinEcho extends InteractiveGraphRenderer {
     let pulse_180 = this.TE / 2;
     
     if (t < pulse_180) {
-      return this._T1(t, values);
+      return values["DP"] * this._T1(t, values);
     }
     else {
-      let start = this._T1(pulse_180, values);
-      return -start + this._T1(t-pulse_180, values) * (1 + start);
+      let start = values["DP"] * this._T1(pulse_180, values);
+      return (values["DP"] + start) * this._T1(t-pulse_180, values) - start;
     }
   }
   
@@ -729,7 +729,11 @@ class AnimatedGraph extends InteractiveGraphRenderer {
     
     this.ctx.setLineDash([5]);
     
-    let y = this.graph_y - Math.round(this.graph_height * this.hline_ratio) - 0.5;
+    let ratio;
+    if (this.RF_angle > 90) ratio = 2 * this.hline_ratio - 1;
+    else                    ratio = this.hline_ratio;
+    
+    let y = this.graph_y - Math.round(this.graph_height * ratio) - 0.5;
     
     this.ctx.beginPath();
     this.ctx.moveTo(this.graph_x - 0.5, y);
