@@ -8,204 +8,216 @@
   </head>
   
   <body>
-    <h1>Aimantation transversale</h1>
-    
-    <p>Suite à l'impulsion RF, observez le <strong>déphasage</strong> des spins. Il est lié aux interactions spins-spins.</p>
-    
-    <div class="flex-blocks">
-      <div>
-        <canvas id="canvas" width="640" height="480">
-          Désolé, votre navigateur ne prend pas en charge les canvas.
-        </canvas>
-        
-        <p class="horizontal-distribution"><span>T2 du tissu&nbsp;: <input type="number" id="tvalue" /> <label><input type="checkbox" id="delay" style="margin-left: 20px;"> délai avant l'impulsion RF</label></span><span><button id="play-button">Play</button></span></p>
-      </div>
-    
-      <div>
-        <svg
-           width="640"
-           height="480"
-           viewBox="0 0 640 480"
-           version="1.1"
-           id="svg"
-           xmlns="http://www.w3.org/2000/svg"
-           xmlns:svg="http://www.w3.org/2000/svg">
-          <defs
-             id="defs2">
-            <marker
-               style="overflow:visible"
-               id="TriangleStart"
-               refX="0"
-               refY="0"
-               orient="auto-start-reverse"
-               markerWidth="4"
-               markerHeight="4"
-               viewBox="0 0 5.3244081 6.1553851"
-               preserveAspectRatio="xMidYMid">
-              <path
-                 transform="scale(0.5)"
-                 style="fill:context-stroke;fill-rule:evenodd;stroke:context-stroke;stroke-width:1pt"
-                 d="M 5.77,0 -2.88,5 V -5 Z"
-                 id="path135" />
-            </marker>
-            <marker
-               style="overflow:visible"
-               id="RoundedArrow"
-               refX="5"
-               refY="0"
-               orient="auto-start-reverse"
-               markerWidth="5"
-               markerHeight="5"
-               viewBox="0 0 6.1347524 5.9304951"
-               preserveAspectRatio="none">
-              <path
-                 transform="scale(0.7)"
-                 d="m -0.21114562,-4.1055728 6.42229122,3.21114561 a 1,1 90 0 1 0,1.78885438 L -0.21114562,4.1055728 A 1.236068,1.236068 31.717474 0 1 -2,3 v -6 a 1.236068,1.236068 148.28253 0 1 1.78885438,-1.1055728 z"
-                 style="fill:context-stroke;fill-rule:evenodd;stroke:none"
-                 id="path2984" />
-            </marker>
-          </defs>
-          <g
-             id="g1014"
-             transform="translate(320,240)">
-            <circle
-               style="color:#000000;overflow:visible;fill:#ff0000;stroke:#800000;stroke-width:4;-inkscape-stroke:none;stop-color:#000000"
-               id="path111"
-               cx="0"
-               cy="0"
-               r="60" />
-            <path
-               style="color:#000000;overflow:visible;fill:none;stroke:#800000;stroke-width:4;stroke-linecap:round;-inkscape-stroke:none;marker-end:url(#RoundedArrow);stop-color:#000000"
-               d="M 0,0 V -60"
-               id="path284"
-               transform="rotate(22.5)" />
-          </g>
-          <g
-             id="g1020"
-             transform="translate(90.65192,239.34107)">
-            <circle
-               style="color:#000000;overflow:visible;fill:#ff0000;stroke:#800000;stroke-width:4;-inkscape-stroke:none;stop-color:#000000"
-               id="circle1016"
-               cx="0"
-               cy="0"
-               r="60" />
-            <path
-               style="color:#000000;overflow:visible;fill:none;stroke:#800000;stroke-width:4;stroke-linecap:round;-inkscape-stroke:none;marker-end:url(#RoundedArrow);stop-color:#000000"
-               d="M 0,0 V -60"
-               id="path1018"
-               transform="rotate(67.5)" />
-          </g>
-          <g
-             id="g1026"
-             transform="translate(217.87211,113.93889)">
-            <circle
-               style="color:#000000;overflow:visible;fill:#ff0000;stroke:#800000;stroke-width:4;-inkscape-stroke:none;stop-color:#000000"
-               id="circle1022"
-               cx="0"
-               cy="0"
-               r="60" />
-            <path
-               style="color:#000000;overflow:visible;fill:none;stroke:#800000;stroke-width:4;stroke-linecap:round;-inkscape-stroke:none;marker-end:url(#RoundedArrow);stop-color:#000000"
-               d="M 0,0 V -60"
-               id="path1024"
-               transform="rotate(-67.5)" />
-          </g>
-          <g
-             id="g1032"
-             transform="translate(549.34808,358.19819)">
-            <circle
-               style="color:#000000;overflow:visible;fill:#ff0000;stroke:#800000;stroke-width:4;-inkscape-stroke:none;stop-color:#000000"
-               id="circle1028"
-               cx="0"
-               cy="0"
-               r="60" />
-            <path
-               style="color:#000000;overflow:visible;fill:none;stroke:#800000;stroke-width:4;stroke-linecap:round;-inkscape-stroke:none;marker-end:url(#RoundedArrow);stop-color:#000000"
-               d="M 0,0 V -60"
-               id="path1030"
-               transform="rotate(-22.5)" />
-          </g>
-          <g
-             id="g1038"
-             transform="translate(383.7965,397.21395)">
-            <circle
-               style="color:#000000;overflow:visible;fill:#ff0000;stroke:#800000;stroke-width:4;-inkscape-stroke:none;stop-color:#000000"
-               id="circle1034"
-               cx="0"
-               cy="0"
-               r="60" />
-            <path
-               style="color:#000000;overflow:visible;fill:none;stroke:#800000;stroke-width:4;stroke-linecap:round;-inkscape-stroke:none;marker-end:url(#RoundedArrow);stop-color:#000000"
-               d="M 0,0 V -60"
-               id="path1036"
-               transform="rotate(-157.5)" />
-          </g>
-          <g
-             id="g1044"
-             transform="translate(189.93918,366.40658)">
-            <circle
-               style="color:#000000;overflow:visible;fill:#ff0000;stroke:#800000;stroke-width:4;-inkscape-stroke:none;stop-color:#000000"
-               id="circle1040"
-               cx="0"
-               cy="0"
-               r="60" />
-            <path
-               style="color:#000000;overflow:visible;fill:none;stroke:#800000;stroke-width:4;stroke-linecap:round;-inkscape-stroke:none;marker-end:url(#RoundedArrow);stop-color:#000000"
-               d="M 0,0 V -60"
-               id="path1042"
-               transform="rotate(-112.5)" />
-          </g>
-          <g
-             id="g1050"
-             transform="translate(393.64918,82.786053)">
-            <circle
-               style="color:#000000;overflow:visible;fill:#ff0000;stroke:#800000;stroke-width:4;-inkscape-stroke:none;stop-color:#000000"
-               id="circle1046"
-               cx="0"
-               cy="0"
-               r="60" />
-            <path
-               style="color:#000000;overflow:visible;fill:none;stroke:#800000;stroke-width:4;stroke-linecap:round;-inkscape-stroke:none;marker-end:url(#RoundedArrow);stop-color:#000000"
-               d="M 0,0 V -60"
-               id="path1048"
-               transform="rotate(112.5)" />
-          </g>
-          <g
-             id="g1056"
-             transform="translate(517.44708,198.74962)">
-            <circle
-               style="color:#000000;overflow:visible;fill:#ff0000;stroke:#800000;stroke-width:4;-inkscape-stroke:none;stop-color:#000000"
-               id="circle1052"
-               cx="0"
-               cy="0"
-               r="60" />
-            <path
-               style="color:#000000;overflow:visible;fill:none;stroke:#800000;stroke-width:4;stroke-linecap:round;-inkscape-stroke:none;marker-end:url(#RoundedArrow);stop-color:#000000"
-               d="M 0,0 V -60"
-               id="path1054"
-               transform="rotate(157.5)" />
-          </g>
-          <g
-             id="vector"
-             transform="translate(320,240)">
-            <path
-               style="color:#000000;overflow:visible;opacity:0.2;fill:none;stroke:#000000;stroke-width:16;stroke-linecap:butt;-inkscape-stroke:none;marker-end:url(#TriangleStart);stop-color:#000000"
-               d="M 0,0 V -200"
-               id="path144" />
-          </g>
-        </svg>
-        
-        <p style="margin-top: -5px;"><button id="overlay-button">Superposer</button></p>
-      </div>
-    </div>
-    
-    <script type="text/javascript">
+    <main>
+      <h1>Aimantation transversale</h1>
       
-      const tc = new TransverseComponent();
-      tc.refresh();
-      tc.play(true);
+      <p>Suite à l'impulsion RF, observez le <strong>déphasage</strong> des spins. Il est lié aux interactions spins-spins.</p>
       
-    </script>
+      <div class="flex-blocks">
+        <div>
+          <canvas id="canvas" width="640" height="480">
+            Désolé, votre navigateur ne prend pas en charge les canvas.
+          </canvas>
+          
+          <p class="horizontal-distribution"><span>T2 du tissu&nbsp;: <input type="number" id="tvalue" /> <label><input type="checkbox" id="delay" style="margin-left: 20px;"> délai avant l'impulsion RF</label></span><span><button id="play-button">Play</button></span></p>
+        </div>
+      
+        <div>
+          <svg
+             width="640"
+             height="480"
+             viewBox="0 0 640 480"
+             version="1.1"
+             id="svg"
+             xmlns="http://www.w3.org/2000/svg"
+             xmlns:svg="http://www.w3.org/2000/svg">
+            <defs
+               id="defs2">
+              <marker
+                 style="overflow:visible"
+                 id="TriangleStart"
+                 refX="0"
+                 refY="0"
+                 orient="auto-start-reverse"
+                 markerWidth="4"
+                 markerHeight="4"
+                 viewBox="0 0 5.3244081 6.1553851"
+                 preserveAspectRatio="xMidYMid">
+                <path
+                   transform="scale(0.5)"
+                   style="fill:context-stroke;fill-rule:evenodd;stroke:context-stroke;stroke-width:1pt"
+                   d="M 5.77,0 -2.88,5 V -5 Z"
+                   id="path135" />
+              </marker>
+              <marker
+                 style="overflow:visible"
+                 id="RoundedArrow"
+                 refX="0"
+                 refY="0"
+                 orient="auto-start-reverse"
+                 markerWidth="5"
+                 markerHeight="5"
+                 viewBox="0 0 6.1347524 5.9304951"
+                 preserveAspectRatio="none">
+                <path
+                   transform="scale(0.7)"
+                   d="m -0.21114562,-4.1055728 6.42229122,3.21114561 a 1,1 90 0 1 0,1.78885438 L -0.21114562,4.1055728 A 1.236068,1.236068 31.717474 0 1 -2,3 v -6 a 1.236068,1.236068 148.28253 0 1 1.78885438,-1.1055728 z"
+                   style="fill:context-stroke;fill-rule:evenodd;stroke:none"
+                   id="path2984" />
+              </marker>
+            </defs>
+            <g
+               id="g1014"
+               transform="translate(320,240)">
+              <circle
+                 style="color:#000000;overflow:visible;fill:#ff0000;stroke:#800000;stroke-width:4;-inkscape-stroke:none;stop-color:#000000"
+                 id="path111"
+                 cx="0"
+                 cy="0"
+                 r="60" />
+              <path
+                 style="color:#000000;overflow:visible;fill:none;stroke:#800000;stroke-width:4;stroke-linecap:round;-inkscape-stroke:none;marker-end:url(#RoundedArrow);stop-color:#000000"
+                 d="M 0,0 V -40"
+                 id="path284"
+                 transform="rotate(22.5)" />
+            </g>
+            <g
+               id="g1020"
+               transform="translate(90.65192,239.34107)">
+              <circle
+                 style="color:#000000;overflow:visible;fill:#ff0000;stroke:#800000;stroke-width:4;-inkscape-stroke:none;stop-color:#000000"
+                 id="circle1016"
+                 cx="0"
+                 cy="0"
+                 r="60" />
+              <path
+                 style="color:#000000;overflow:visible;fill:none;stroke:#800000;stroke-width:4;stroke-linecap:round;-inkscape-stroke:none;marker-end:url(#RoundedArrow);stop-color:#000000"
+                 d="M 0,0 V -40"
+                 id="path1018"
+                 transform="rotate(67.5)" />
+            </g>
+            <g
+               id="g1026"
+               transform="translate(217.87211,113.93889)">
+              <circle
+                 style="color:#000000;overflow:visible;fill:#ff0000;stroke:#800000;stroke-width:4;-inkscape-stroke:none;stop-color:#000000"
+                 id="circle1022"
+                 cx="0"
+                 cy="0"
+                 r="60" />
+              <path
+                 style="color:#000000;overflow:visible;fill:none;stroke:#800000;stroke-width:4;stroke-linecap:round;-inkscape-stroke:none;marker-end:url(#RoundedArrow);stop-color:#000000"
+                 d="M 0,0 V -40"
+                 id="path1024"
+                 transform="rotate(-67.5)" />
+            </g>
+            <g
+               id="g1032"
+               transform="translate(549.34808,358.19819)">
+              <circle
+                 style="color:#000000;overflow:visible;fill:#ff0000;stroke:#800000;stroke-width:4;-inkscape-stroke:none;stop-color:#000000"
+                 id="circle1028"
+                 cx="0"
+                 cy="0"
+                 r="60" />
+              <path
+                 style="color:#000000;overflow:visible;fill:none;stroke:#800000;stroke-width:4;stroke-linecap:round;-inkscape-stroke:none;marker-end:url(#RoundedArrow);stop-color:#000000"
+                 d="M 0,0 V -40"
+                 id="path1030"
+                 transform="rotate(-22.5)" />
+            </g>
+            <g
+               id="g1038"
+               transform="translate(383.7965,397.21395)">
+              <circle
+                 style="color:#000000;overflow:visible;fill:#ff0000;stroke:#800000;stroke-width:4;-inkscape-stroke:none;stop-color:#000000"
+                 id="circle1034"
+                 cx="0"
+                 cy="0"
+                 r="60" />
+              <path
+                 style="color:#000000;overflow:visible;fill:none;stroke:#800000;stroke-width:4;stroke-linecap:round;-inkscape-stroke:none;marker-end:url(#RoundedArrow);stop-color:#000000"
+                 d="M 0,0 V -40"
+                 id="path1036"
+                 transform="rotate(-157.5)" />
+            </g>
+            <g
+               id="g1044"
+               transform="translate(189.93918,366.40658)">
+              <circle
+                 style="color:#000000;overflow:visible;fill:#ff0000;stroke:#800000;stroke-width:4;-inkscape-stroke:none;stop-color:#000000"
+                 id="circle1040"
+                 cx="0"
+                 cy="0"
+                 r="60" />
+              <path
+                 style="color:#000000;overflow:visible;fill:none;stroke:#800000;stroke-width:4;stroke-linecap:round;-inkscape-stroke:none;marker-end:url(#RoundedArrow);stop-color:#000000"
+                 d="M 0,0 V -40"
+                 id="path1042"
+                 transform="rotate(-112.5)" />
+            </g>
+            <g
+               id="g1050"
+               transform="translate(393.64918,82.786053)">
+              <circle
+                 style="color:#000000;overflow:visible;fill:#ff0000;stroke:#800000;stroke-width:4;-inkscape-stroke:none;stop-color:#000000"
+                 id="circle1046"
+                 cx="0"
+                 cy="0"
+                 r="60" />
+              <path
+                 style="color:#000000;overflow:visible;fill:none;stroke:#800000;stroke-width:4;stroke-linecap:round;-inkscape-stroke:none;marker-end:url(#RoundedArrow);stop-color:#000000"
+                 d="M 0,0 V -40"
+                 id="path1048"
+                 transform="rotate(112.5)" />
+            </g>
+            <g
+               id="g1056"
+               transform="translate(517.44708,198.74962)">
+              <circle
+                 style="color:#000000;overflow:visible;fill:#ff0000;stroke:#800000;stroke-width:4;-inkscape-stroke:none;stop-color:#000000"
+                 id="circle1052"
+                 cx="0"
+                 cy="0"
+                 r="60" />
+              <path
+                 style="color:#000000;overflow:visible;fill:none;stroke:#800000;stroke-width:4;stroke-linecap:round;-inkscape-stroke:none;marker-end:url(#RoundedArrow);stop-color:#000000"
+                 d="M 0,0 V -40"
+                 id="path1054"
+                 transform="rotate(157.5)" />
+            </g>
+            <g
+               id="vector"
+               transform="translate(320,240)"
+               style="opacity:0.2">
+              <path
+                 style="color:#000000;overflow:visible;opacity:1;fill:none;stroke:#000000;stroke-width:16;stroke-linecap:butt;-inkscape-stroke:none;marker-end:url(#TriangleStart);stop-color:#000000"
+                 d="M 0,0 V -200"
+                 id="path144" />
+              <text
+                 xml:space="preserve"
+                 style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:13.3333px;line-height:125%;font-family:Arial;-inkscape-font-specification:'Arial, Bold';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;text-align:center;text-decoration-color:#000000;letter-spacing:0px;word-spacing:0px;text-anchor:middle;fill:#ffffff;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;-inkscape-stroke:none;stop-color:#000000"
+                 x="99.597816"
+                 y="2.5268493"
+                 id="text646"
+                 transform="rotate(-90)">M<tspan
+             style="font-size:65%;baseline-shift:sub"
+             id="tspan648">xy</tspan></text>
+            </g>
+          </svg>
+          
+          <p style="margin-top: -5px;"><button id="overlay-button">Superposer</button></p>
+        </div>
+      </div>
+      
+      <script type="text/javascript">
+        
+        const tc = new TransverseComponent();
+        tc.refresh();
+        tc.play(true);
+        
+      </script>
+    </main>
     
     <footer>
       <p>Auteur&nbsp;: Quentin Castier. Projet réalisé dans le cadre d'un mémoire à l'Institut de Formation de Manipulateurs d'Électroradiologie Médicale du CHU Amiens-Picardie.</p>
