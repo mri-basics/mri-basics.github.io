@@ -288,6 +288,8 @@ class SpinEcho extends InteractiveGraphRenderer {
   gradient_margin = 5;
   gradient_x_offset = 20;
   
+  window_margin = 40;
+  
   TR = 1500;
   TE = 50;
   min_tr = 100;
@@ -297,7 +299,7 @@ class SpinEcho extends InteractiveGraphRenderer {
   constructor(canvas_id="canvas", svg_id="svg", tr_id="tr", te_id="te", table_id="table") {
     super(canvas_id);
     
-    this.canvas.width = window.innerWidth - 20;
+    this.canvas.width = window.innerWidth - this.window_margin;
     this.update_graph_coordinates();
     
     this.svg = document.getElementById(svg_id);
@@ -320,7 +322,7 @@ class SpinEcho extends InteractiveGraphRenderer {
     });
     
     window.addEventListener('resize', () => {
-      this.canvas.width = window.innerWidth - 20;
+      this.canvas.width = window.innerWidth - this.window_margin;
       this.graph_width = this.canvas.width - this.margin_left - this.margin_right;
       this.refresh();
     });
