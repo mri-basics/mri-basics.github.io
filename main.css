@@ -26,7 +26,7 @@ MAIN {
   background-color:var(--main-color) ;
   max-width: 1350px;
   margin: 0 auto;
-  padding: 20px 20px 100px;
+  padding: 20px;
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
 }
 
@@ -64,34 +64,25 @@ P {
 
 A {
   color: var(--link-color);
-  transition: color 0.3s ease, transform 0.3s ease;
 }
 
 
 A:hover {
   color: var(--text-color);
-  transform: translateY(-2px);
 }
 
 
-A:active {
-  transform: translateY(0px);
-}
-
-
-IMG
-{
+IMG {
   object-fit: none;
 }
 
-INPUT[type="number"]
-{
+
+INPUT[type="number"] {
   max-width: 60px;
 }
 
 
-INPUT[type="range"]
-{
+INPUT[type="range"] {
   vertical-align: middle;
 }
 
@@ -129,49 +120,44 @@ TABLE TR:nth-child(even) {
 }
 
 
-FOOTER
-{
+FOOTER {
   margin-top: 15px;
   margin-bottom: 15px;
   font-size: small;
 }
 
 
-FOOTER>P
-{
+FOOTER>P {
   margin: 0;
   text-align: center;
   font-style: italic;
 }
 
 
-FOOTER>P:first-child
-{
+FOOTER>P:first-child {
   font-weight: bold;
 }
 
 
-.horizontal-distribution
-{
+.horizontal-distribution {
   display: flex;
   justify-content: space-between;
 }
 
 
-.flex-blocks
-{
+.flex-blocks {
   display: flex;
   flex-wrap: wrap;
   gap: 0 70px;
 }
 
 
-.links
-{
+.links {
   display: flex;
   justify-content: center;
   flex-wrap: wrap;
   gap: 20px;
+  margin-bottom: 50px;
 }
 
 
@@ -186,12 +172,19 @@ FOOTER>P:first-child
   border-radius: var(--border-radius);
   padding: 10px;
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-  transition: box-shadow 0.3s ease;
+  transition: box-shadow 0.1s ease, transform 0.1s ease;
 }
 
 
 .links A:hover {
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+  transform: scale(1.02);
+}
+
+
+.links A:active {
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  transform: scale(1);
 }
 
 
@@ -200,8 +193,37 @@ FOOTER>P:first-child
 }
 
 
-.links SPAN
-{
+.links SPAN {
   margin-top: 8px;
   font-weight: bold;
+}
+
+
+.return-home {
+  text-align: center;
+  margin-top: 80px;
+}
+
+
+.return-home A {
+  display: inline-block;
+  background-color: var(--link-color);
+  color: white;
+  padding: 10px 20px;
+  border-radius: var(--border-radius);
+  text-decoration: none;
+  font-weight: bold;
+  transition: background-color 0.1s ease, transform 0.1s ease;
+}
+
+
+.return-home A:hover {
+  background-color: var(--text-color);
+  transform: scale(1.02);
+}
+
+
+.return-home A:active {
+  background-color: var(--link-color);
+  transform: scale(1);
 }
