@@ -79,6 +79,7 @@ IMG {
 
 INPUT[type="number"] {
   max-width: 60px;
+  direction: rtl;
 }
 
 
@@ -117,6 +118,19 @@ TABLE TD:first-child {
 
 TABLE TR:nth-child(even) {
   background-color: rgba(0, 0, 0, 0.02);
+}
+
+
+ASIDE {
+  margin-top: 15px;
+  font-size: 0.9rem;
+  font-style: italic;
+  opacity: 0.25;
+}
+
+
+ASIDE:hover {
+  opacity: 0.75;
 }
 
 

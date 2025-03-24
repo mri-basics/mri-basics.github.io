@@ -390,11 +390,11 @@ class SpinEcho extends InteractiveGraphRenderer {
     td.appendChild(label);
     
     td = document.createElement("td");
-    td.innerHTML = T1;
+    td.innerHTML = `${T1} ms`;
     tr.appendChild(td);
     
     td = document.createElement("td");
-    td.innerHTML = T2;
+    td.innerHTML = `${T2} ms`;
     tr.appendChild(td);
     
     td = document.createElement("td");
@@ -785,7 +785,7 @@ class AnimatedGraph extends InteractiveGraphRenderer {
       this.ctx.font = "10px Arial";
       this.ctx.textAlign = "center";
       
-      this.ctx.fillText(`${this.time} ms`, x, this.graph_y - this.graph_height - this.arrow_height - 5);
+      this.ctx.fillText(`${Math.round(this.time)} ms`, x, this.graph_y - this.graph_height - this.arrow_height - 5);
     }
   }
   

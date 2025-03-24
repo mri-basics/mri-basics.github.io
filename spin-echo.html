@@ -20,13 +20,16 @@
       
       <div class="horizontal-distribution">
         <div style="flex-grow: 1; margin-right: 20px;">
-          <p class="horizontal-distribution" style="flex-wrap: wrap;"><span>TR&nbsp;: <input type="number" id="tr" /> – TE&nbsp;: <input type="number" id="te" /></span> <span>Zoom&nbsp;: <input type="range" id="slider" min="0" max="6" value="5" step="1" autocomplete="off" oninput="se.zoom(slider.value)" /></span></p>
+          <p class="horizontal-distribution" style="flex-wrap: wrap;"><span>TR&nbsp;: <input type="number" id="tr" /> ms <span style="margin: 0 8px;">–</span> TE&nbsp;: <input type="number" id="te" /> ms</span> <span>Zoom&nbsp;: <input type="range" id="slider" min="0" max="6" value="5" step="1" autocomplete="off" oninput="se.zoom(slider.value)" /></span></p>
+          <p>Pré-réglages&nbsp;: <button onclick="se.preset(620, 12)">T1</button> <button onclick="se.preset(3000, 100)">T2</button> <button onclick="se.preset(3000, 12)">DP</button></p>
           
-          <p style="margin-top: 140px">Tableau des valeurs (IRM 1.5T)&nbsp;:</p>
+          <h2 style="margin: 90px 0 8px">Propriétés des tissus&nbsp;:</h2>
           
           <table id="table">
             <tr><th></th><th>T1</th><th>T2</th><th>&rho;</th></tr>
           </table>
+          
+          <aside>* Les valeurs mentionnées sont spécifiques à un champ magnétique de 1,5 tesla.</aside>
         </div>
         
         <svg
